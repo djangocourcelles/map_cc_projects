@@ -1,7 +1,7 @@
 # Requirements : Map CC Projects
 
 **Défini :** 2026-05-10
-**Core Value :** Avoir en un coup d'œil la vue globale de tous ses projets Claude Code — statut, activité, phase — sans ouvrir chaque dossier.
+**Core Value :** Avoir en un coup d'oeil la vue globale de tous ses projets Claude Code — statut, activité, phase — sans ouvrir chaque dossier.
 
 ## v1 Requirements
 
@@ -68,22 +68,22 @@
 
 | Requirement | Phase | Statut |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
-| VIS-01 | Phase 1 | Pending |
-| VIS-02 | Phase 1 | Pending |
-| VIS-03 | Phase 1 | Pending |
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| VIS-04 | Phase 2 | Pending |
-| VIS-05 | Phase 2 | Pending |
-| INT-04 | Phase 2 | Pending |
-| INT-01 | Phase 3 | Pending |
-| INT-02 | Phase 3 | Pending |
-| INT-03 | Phase 3 | Pending |
+| INFRA-01 | Phase 1 — Core Graph | Pending |
+| INFRA-02 | Phase 1 — Core Graph | Pending |
+| INFRA-03 | Phase 1 — Core Graph | Pending |
+| VIS-01 | Phase 1 — Core Graph | Pending |
+| VIS-02 | Phase 1 — Core Graph | Pending |
+| VIS-03 | Phase 1 — Core Graph | Pending |
+| DATA-01 | Phase 1 — Core Graph | Pending |
+| DATA-02 | Phase 1 — Core Graph | Pending |
+| DATA-03 | Phase 1 — Core Graph | Pending |
+| DATA-04 | Phase 1 — Core Graph | Pending |
+| VIS-04 | Phase 2 — Live Data | Pending |
+| VIS-05 | Phase 2 — Live Data | Pending |
+| INT-04 | Phase 2 — Live Data | Pending |
+| INT-01 | Phase 3 — Interactions | Pending |
+| INT-02 | Phase 3 — Interactions | Pending |
+| INT-03 | Phase 3 — Interactions | Pending |
 
 **Couverture :**
 - Requirements v1 : 16 total
@@ -92,4 +92,4 @@
 
 ---
 *Requirements définis : 2026-05-10*
-*Dernière mise à jour : 2026-05-10 après définition initiale*
+*Dernière mise à jour : 2026-05-10 après création roadmap*
