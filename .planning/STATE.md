@@ -62,5 +62,7 @@ None.
 
 ## Session Continuity
 
-Last updated: 2026-05-10 (roadmap creation)
+Last updated: 2026-05-11 (phase 1 context gathered)
+Stopped at: Phase 1 context gathered
+Resume file: `.planning/phases/01-core-graph/01-CONTEXT.md`
 Next action: `/gsd-plan-phase 1`
