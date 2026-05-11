@@ -13,7 +13,7 @@ findings:
   warning: 6
   info: 4
   total: 13
-status: issues_found
+status: fixed
 ---
 
 # Phase 02 : Rapport de revue de code
