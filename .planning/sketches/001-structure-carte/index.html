@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Sketch 001 — Structure carte projets</title>
+<link rel="stylesheet" href="../themes/default.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); overflow: hidden; }
+
+  /* ── Toolbar ── */
+  #toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+    padding: 8px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .sketch-label { font-size: var(--text-xs); color: var(--color-text-muted); margin-right: 4px; }
+  .tab {
+    font-size: var(--text-sm); padding: 4px 12px; border-radius: var(--radius-full);
+    border: 1px solid var(--color-border); background: transparent; color: var(--color-text-muted);
+    cursor: pointer; transition: all .15s;
+  }
+  .tab.active { background: var(--color-active); border-color: var(--color-active); color: #0d1117; font-weight: 600; }
+  .tab:hover:not(.active) { border-color: var(--color-text-muted); color: var(--color-text); }
+  .winner-badge { font-size: var(--text-xs); margin-left: 4px; }
+
+  /* ── Variants ── */
+  .variant { display: none; width: 100vw; height: 100vh; padding-top: 42px; }
+  .variant.active { display: block; }
+
+  /* ── SVG ── */
+  svg { width: 100%; height: 100%; }
+
+  /* ── Légende ── */
+  .legende {
+    position: fixed; bottom: 16px; left: 16px; z-index: 100;
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); padding: 10px 14px; font-size: var(--text-xs);
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .legende-titre { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: 2px; text-transform: uppercase; letter-spacing: .05em; }
+  .legende-item { display: flex; align-items: center; gap: 8px; }
+  .legende-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legende-dash { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1.5px dashed var(--color-inactive); background: transparent; }
+</style>
+</head>
+<body>
+
+<!-- ── TOOLBAR ── -->
+<div id="toolbar">
+  <span class="sketch-label">Sketch 001</span>
+  <button class="tab active" onclick="showVariant('a', this)">A: Anneaux concentriques</button>
+  <button class="tab" onclick="showVariant('b', this)">B: Clusters colonnes</button>
+  <button class="tab" onclick="showVariant('c', this)">C: Force libre améliorée</button>
+</div>
+
+<!-- ── VARIANT A — Anneaux ── -->
+<div id="variant-a" class="variant active">
+  <svg id="svg-a"></svg>
+  <div class="legende">
+    <div class="legende-titre">Activité</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#3fb950"></div> ≤ 7 jours (actif)</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#d29922"></div> 8 – 30 jours</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#6e7681"></div> > 30 jours (inactif)</div>
+    <div class="legende-item"><div class="legende-dash"></div> Sans dépôt git</div>
+  </div>
+</div>
+
+<!-- ── VARIANT B — Clusters ── -->
+<div id="variant-b" class="variant">
+  <svg id="svg-b"></svg>
+  <div class="legende">
+    <div class="legende-titre">Activité</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#3fb950"></div> ≤ 7 jours (actif)</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#d29922"></div> 8 – 30 jours</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#6e7681"></div> > 30 jours (inactif)</div>
+    <div class="legende-item"><div class="legende-dash"></div> Sans dépôt git</div>
+  </div>
+</div>
+
+<!-- ── VARIANT C — Force libre améliorée ── -->
+<div id="variant-c" class="variant">
+  <svg id="svg-c"></svg>
+  <div class="legende">
+    <div class="legende-titre">Activité</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#3fb950"></div> ≤ 7 jours (actif)</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#d29922"></div> 8 – 30 jours</div>
+    <div class="legende-item"><div class="legende-dot" style="background:#6e7681"></div> > 30 jours (inactif)</div>
+    <div class="legende-item"><div class="legende-dash"></div> Sans dépôt git</div>
+  </div>
+</div>
+
+<script>
+// ── Données simulées (proches de la réalité scanner) ──
+const projets = [
+  { id: 'map_project',       stacks: ['🟢'],       jours: 0,   has_git: true  },
+  { id: 'Projet_BotAVV',     stacks: ['🟢','🐍'],  jours: 2,   has_git: true  },
+  { id: 'projetA',           stacks: ['🐍'],       jours: 8,   has_git: true  },
+  { id: 'formation-api',     stacks: ['🟢'],       jours: 14,  has_git: true  },
+  { id: 'cv-generator',      stacks: ['🟢'],       jours: 22,  has_git: true  },
+  { id: 'data-pipeline',     stacks: ['🐍'],       jours: 28,  has_git: true  },
+  { id: 'SCC',               stacks: [],           jours: 45,  has_git: true  },
+  { id: 'dashboard-v1',      stacks: ['🟢'],       jours: 60,  has_git: true  },
+  { id: 'jupyter_notebook',  stacks: ['📓'],       jours: 65,  has_git: true  },
+  { id: 'scraper-tool',      stacks: ['🐍'],       jours: 90,  has_git: true  },
+  { id: 'archive-2023',      stacks: [],           jours: 180, has_git: true  },
+  { id: 'Formations',        stacks: ['📓'],       jours: 95,  has_git: false },
+  { id: 'GitHub',            stacks: [],           jours: 120, has_git: false },
+  { id: 'docs-internes',     stacks: [],           jours: 200, has_git: false },
+  { id: 'proto-voice',       stacks: ['🐍'],       jours: 7,   has_git: true  },
+  { id: 'n8n-flows',         stacks: [],           jours: 18,  has_git: true  },
+  { id: 'rag-experiment',    stacks: ['🐍'],       jours: 35,  has_git: true  },
+  { id: 'landing-page',      stacks: ['🟢'],       jours: 50,  has_git: true  },
+  { id: 'batch-scripts',     stacks: ['🐍'],       jours: 110, has_git: false },
+  { id: 'old-chatbot',       stacks: ['🐍','🟢'],  jours: 160, has_git: true  },
+];
+
+function couleur(d) {
+  if (!d.has_git) return '#444d56';
+  if (d.jours <= 7)  return '#3fb950';
+  if (d.jours <= 30) return '#d29922';
+  return '#6e7681';
+}
+
+function rayon(d) {
+  if (!d.has_git) return 24;
+  return Math.max(22, Math.min(46, 46 - d.jours * 0.25));
+}
+
+function labelJours(d) {
+  if (!d.has_git) return 'sans git';
+  if (d.jours === 0) return 'auj.';
+  if (d.jours === 1) return '1j';
+  return d.jours + 'j';
+}
+
+function groupe(d) {
+  if (!d.has_git) return 'nogit';
+  if (d.jours <= 7)  return 'actif';
+  if (d.jours <= 30) return 'recent';
+  return 'inactif';
+}
+
+// ────────────────────────────────────────────
+// VARIANT A — Anneaux concentriques (forceRadial)
+// ────────────────────────────────────────────
+function buildA() {
+  const svgEl = document.getElementById('svg-a');
+  const W = svgEl.clientWidth, H = svgEl.clientHeight;
+  const cx = W / 2, cy = H / 2;
+
+  const svg = d3.select('#svg-a');
+  svg.selectAll('*').remove();
+
+  // Rayons cibles par groupe
+  const rayonCible = { actif: 0, recent: Math.min(W, H) * 0.22, inactif: Math.min(W, H) * 0.40, nogit: Math.min(W, H) * 0.40 };
+
+  // Anneaux de fond (guides visuels)
+  const anneaux = [
+    { r: Math.min(W, H) * 0.13, label: 'Actifs ≤ 7j', color: '#3fb950' },
+    { r: Math.min(W, H) * 0.30, label: 'Récents ≤ 30j', color: '#d29922' },
+    { r: Math.min(W, H) * 0.48, label: 'Inactifs / sans git', color: '#6e7681' },
+  ];
+
+  const g = svg.append('g');
+
+  anneaux.forEach(a => {
+    g.append('circle')
+      .attr('cx', cx).attr('cy', cy)
+      .attr('r', a.r)
+      .attr('fill', 'none')
+      .attr('stroke', a.color)
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '4 6')
+      .attr('opacity', 0.18);
+
+    g.append('text')
+      .attr('x', cx + 6)
+      .attr('y', cy - a.r + 14)
+      .attr('fill', a.color)
+      .attr('font-size', '11px')
+      .attr('opacity', 0.55)
+      .attr('font-family', 'system-ui, sans-serif')
+      .text(a.label);
+  });
+
+  // Nœuds
+  const nodes = projets.map(d => ({ ...d, r: rayon(d) }));
+
+  const sim = d3.forceSimulation(nodes)
+    .force('radial', d3.forceRadial(d => {
+      const g = groupe(d);
+      return rayonCible[g] || 0;
+    }, cx, cy).strength(0.6))
+    .force('collide', d3.forceCollide(d => d.r + 4).strength(0.9))
+    .force('center', d3.forceCenter(cx, cy).strength(0.05))
+    .stop();
+
+  for (let i = 0; i < 300; i++) sim.tick();
+
+  const noeud = g.selectAll('.noeud')
+    .data(nodes)
+    .enter().append('g')
+    .attr('class', 'noeud')
+    .attr('transform', d => `translate(${d.x},${d.y})`);
+
+  noeud.append('circle')
+    .attr('r', d => d.r)
+    .attr('fill', d => couleur(d) + '22')
+    .attr('stroke', d => couleur(d))
+    .attr('stroke-width', d => d.has_git ? 2 : 1.5)
+    .attr('stroke-dasharray', d => d.has_git ? null : '5 4');
+
+  // Emojis stack
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'middle')
+    .attr('y', d => d.stacks.length ? -5 : 2)
+    .attr('font-size', d => d.r * 0.55 + 'px')
+    .text(d => d.stacks.join(''));
+
+  // Nom + jours
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', d => d.r + 12)
+    .attr('fill', d => couleur(d))
+    .attr('font-size', '10px')
+    .attr('font-family', 'system-ui, sans-serif')
+    .text(d => d.id.length > 12 ? d.id.slice(0, 11) + '…' : d.id);
+
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', d => d.r + 23)
+    .attr('fill', d => couleur(d))
+    .attr('font-size', '9px')
+    .attr('opacity', 0.75)
+    .attr('font-family', 'system-ui, sans-serif')
+    .text(d => labelJours(d));
+
+  // Drag simple
+  noeud.call(d3.drag()
+    .on('start', function(event, d) { d.fx = d.x; d.fy = d.y; })
+    .on('drag', function(event, d) {
+      d.fx = event.x; d.fy = event.y;
+      d3.select(this).attr('transform', `translate(${d.x},${d.y})`);
+    })
+    .on('end', function(event, d) { d.fx = null; d.fy = null; })
+  );
+}
+
+// ────────────────────────────────────────────
+// VARIANT B — Clusters colonnes (forceX + forceY)
+// ────────────────────────────────────────────
+function buildB() {
+  const svgEl = document.getElementById('svg-b');
+  const W = svgEl.clientWidth, H = svgEl.clientHeight;
+  const topOffset = 80;
+
+  const svg = d3.select('#svg-b');
+  svg.selectAll('*').remove();
+
+  const colonnes = { actif: W * 0.20, recent: W * 0.50, inactif: W * 0.80, nogit: W * 0.80 };
+  const coly = { actif: H * 0.45, recent: H * 0.45, inactif: H * 0.35, nogit: H * 0.60 };
+
+  // Labels colonnes
+  const headers = [
+    { x: W * 0.20, label: '⬤ Actifs', sub: '≤ 7 jours', color: '#3fb950' },
+    { x: W * 0.50, label: '⬤ Récents', sub: '8 – 30 jours', color: '#d29922' },
+    { x: W * 0.80, label: '⬤ Inactifs / sans git', sub: '> 30 jours', color: '#6e7681' },
+  ];
+
+  const g = svg.append('g');
+
+  // Lignes séparatrices
+  [W * 0.35, W * 0.65].forEach(x => {
+    g.append('line')
+      .attr('x1', x).attr('x2', x)
+      .attr('y1', topOffset - 20).attr('y2', H)
+      .attr('stroke', '#30363d').attr('stroke-width', 1);
+  });
+
+  headers.forEach(h => {
+    g.append('text')
+      .attr('x', h.x).attr('y', topOffset - 20)
+      .attr('text-anchor', 'middle')
+      .attr('fill', h.color).attr('font-size', '13px').attr('font-weight', '600')
+      .attr('font-family', 'system-ui, sans-serif')
+      .text(h.label);
+    g.append('text')
+      .attr('x', h.x).attr('y', topOffset - 5)
+      .attr('text-anchor', 'middle')
+      .attr('fill', '#6e7681').attr('font-size', '10px')
+      .attr('font-family', 'system-ui, sans-serif')
+      .text(h.sub);
+  });
+
+  const nodes = projets.map(d => ({ ...d, r: rayon(d) }));
+
+  const sim = d3.forceSimulation(nodes)
+    .force('x', d3.forceX(d => colonnes[groupe(d)]).strength(0.5))
+    .force('y', d3.forceY(d => coly[groupe(d)]).strength(0.15))
+    .force('collide', d3.forceCollide(d => d.r + 5).strength(0.9))
+    .stop();
+
+  for (let i = 0; i < 400; i++) sim.tick();
+
+  const noeud = g.selectAll('.noeud')
+    .data(nodes)
+    .enter().append('g')
+    .attr('class', 'noeud')
+    .attr('transform', d => `translate(${d.x},${d.y + topOffset})`);
+
+  noeud.append('circle')
+    .attr('r', d => d.r)
+    .attr('fill', d => couleur(d) + '22')
+    .attr('stroke', d => couleur(d))
+    .attr('stroke-width', d => d.has_git ? 2 : 1.5)
+    .attr('stroke-dasharray', d => d.has_git ? null : '5 4');
+
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'middle')
+    .attr('y', d => d.stacks.length ? -5 : 2)
+    .attr('font-size', d => d.r * 0.55 + 'px')
+    .text(d => d.stacks.join(''));
+
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', d => d.r + 12)
+    .attr('fill', d => couleur(d))
+    .attr('font-size', '10px')
+    .attr('font-family', 'system-ui, sans-serif')
+    .text(d => d.id.length > 12 ? d.id.slice(0, 11) + '…' : d.id);
+
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', d => d.r + 23)
+    .attr('fill', d => couleur(d))
+    .attr('font-size', '9px')
+    .attr('opacity', 0.75)
+    .attr('font-family', 'system-ui, sans-serif')
+    .text(d => labelJours(d));
+
+  noeud.call(d3.drag()
+    .on('start', (e, d) => { d.fx = d.x; d.fy = d.y; })
+    .on('drag', function(e, d) { d.fx = e.x; d.fy = e.y; d3.select(this).attr('transform', `translate(${d.fx},${d.fy + topOffset})`); })
+    .on('end', (e, d) => { d.fx = null; d.fy = null; })
+  );
+}
+
+// ────────────────────────────────────────────
+// VARIANT C — Force libre + couleurs + légende
+// ────────────────────────────────────────────
+function buildC() {
+  const svgEl = document.getElementById('svg-c');
+  const W = svgEl.clientWidth, H = svgEl.clientHeight;
+  const cx = W / 2, cy = H / 2;
+
+  const svg = d3.select('#svg-c');
+  svg.selectAll('*').remove();
+
+  const g = svg.append('g');
+
+  const nodes = projets.map((d, i) => ({
+    ...d, r: rayon(d),
+    x: cx + Math.cos(i / projets.length * Math.PI * 2) * 200,
+    y: cy + Math.sin(i / projets.length * Math.PI * 2) * 200,
+  }));
+
+  const sim = d3.forceSimulation(nodes)
+    .force('center', d3.forceCenter(cx, cy))
+    .force('charge', d3.forceManyBody().strength(-60))
+    .force('collide', d3.forceCollide(d => d.r + 6).strength(0.9))
+    .stop();
+
+  for (let i = 0; i < 300; i++) sim.tick();
+
+  const noeud = g.selectAll('.noeud')
+    .data(nodes)
+    .enter().append('g')
+    .attr('class', 'noeud')
+    .attr('transform', d => `translate(${d.x},${d.y})`);
+
+  // Halo glow pour actifs
+  noeud.filter(d => d.jours <= 7 && d.has_git)
+    .append('circle')
+    .attr('r', d => d.r + 8)
+    .attr('fill', '#3fb95012')
+    .attr('stroke', 'none');
+
+  noeud.append('circle')
+    .attr('r', d => d.r)
+    .attr('fill', d => couleur(d) + '22')
+    .attr('stroke', d => couleur(d))
+    .attr('stroke-width', d => {
+      if (!d.has_git) return 1.5;
+      if (d.jours <= 7) return 2.5;
+      return 2;
+    })
+    .attr('stroke-dasharray', d => d.has_git ? null : '5 4');
+
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'middle')
+    .attr('y', d => d.stacks.length ? -5 : 2)
+    .attr('font-size', d => d.r * 0.55 + 'px')
+    .text(d => d.stacks.join(''));
+
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', d => d.r + 12)
+    .attr('fill', d => couleur(d))
+    .attr('font-size', '10px')
+    .attr('font-family', 'system-ui, sans-serif')
+    .text(d => d.id.length > 12 ? d.id.slice(0, 11) + '…' : d.id);
+
+  noeud.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', d => d.r + 23)
+    .attr('fill', d => couleur(d))
+    .attr('font-size', '9px')
+    .attr('opacity', 0.75)
+    .attr('font-family', 'system-ui, sans-serif')
+    .text(d => labelJours(d));
+
+  // Zoom + pan
+  const zoom = d3.zoom().scaleExtent([0.3, 4]).on('zoom', e => g.attr('transform', e.transform));
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'transparent').call(zoom);
+  svg.node().appendChild(g.node());
+
+  noeud.call(d3.drag()
+    .on('start', function(e, d) { e.sourceEvent.stopPropagation(); d.fx = d.x; d.fy = d.y; })
+    .on('drag', function(e, d) { d.fx = e.x; d.fy = e.y; d3.select(this).attr('transform', `translate(${e.x},${e.y})`); })
+    .on('end', (e, d) => { d.fx = null; d.fy = null; })
+  );
+}
+
+// ── Navigation ──
+function showVariant(id, btn) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  btn.classList.add('active');
+  // Rebuild pour avoir les bonnes dimensions
+  if (id === 'a') buildA();
+  if (id === 'b') buildB();
+  if (id === 'c') buildC();
+}
+
+// ── Init ──
+window.addEventListener('load', () => {
+  buildA();
+  // Pre-build others for snappy switching
+  setTimeout(() => { buildB(); buildC(); }, 100);
+});
+window.addEventListener('resize', () => {
+  const active = document.querySelector('.variant.active');
+  if (active.id === 'variant-a') buildA();
+  if (active.id === 'variant-b') buildB();
+  if (active.id === 'variant-c') buildC();
+});
+</script>
+</body>
+</html>
