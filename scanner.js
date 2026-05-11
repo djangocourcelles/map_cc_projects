@@ -58,71 +58,127 @@ function joursEnTexte(jours) {
 }
 
 /**
- * Calcule le rayon de la bulle (D-10).
- * Formule : clamp(28, 28 + (30 - jours) * 0.8, 56)
- * Retourne 28 si jours est null (pas de git).
+ * Calcule le rayon de la bulle selon les 5 paliers D-02.
+ * null (sans git) → 12, 0j → 50, <7j → 40, <30j → 30, <90j → 20, ≥90j → 12
  */
 function calculerRayon(jours) {
-  if (jours === null) return 28;
-  return Math.max(28, Math.min(56, 28 + (30 - jours) * 0.8));
+  if (jours === null) return 12;  // sans git (D-03)
+  if (jours === 0)    return 50;
+  if (jours < 7)      return 40;
+  if (jours < 30)     return 30;
+  if (jours < 90)     return 20;
+  return 12;
 }
 
 /**
- * Calcule l'opacité de la bulle (D-05).
- * Sans git → 0.4
- * < 7 jours → 1.0
- * 7–30 jours → 0.6
- * > 30 jours → 0.3
+ * Calcule l'opacité de la bulle (D-01).
+ * Sans git uniquement → 0.4 ; tous les projets avec git → 1.0
  */
 function calculerOpacite(jours, hasGit) {
-  if (!hasGit || jours === null) return 0.4;
-  if (jours < 7)   return 1.0;
-  if (jours <= 30) return 0.6;
-  return 0.3;
+  if (!hasGit || jours === null) return 0.4;  // sans git uniquement (D-01, D-03)
+  return 1.0;  // tous les projets avec git ont opacité 1.0
+}
+
+/**
+ * Lit le statut GSD depuis le fichier STATE.md d'un projet.
+ * Retourne le statut (string) ou null si STATE.md absent.
+ */
+function lireStatutGSD(cheminProjet) {
+  const stateFile = path.join(cheminProjet, '.planning', 'STATE.md');
+  try {
+    const contenu = fs.readFileSync(stateFile, 'utf8');
+    const match = contenu.match(/^status:\s*(.+)$/m);
+    return match ? match[1].trim() : 'unknown';
+  } catch {
+    return null;  // pas de STATE.md → anneau tireté (D-05)
+  }
+}
+
+/**
+ * Construit un ProjectRecord pour un répertoire donné.
+ * @param {string} chemin - Chemin absolu du projet
+ * @param {string} id - Identifiant unique (nom ou parent/nom)
+ * @param {string} nom - Nom affiché
+ * @returns {object} ProjectRecord enrichi Phase 2
+ */
+function construireRecord(chemin, id, nom) {
+  const hasGit = fs.existsSync(path.join(chemin, '.git'));
+
+  // Détection multi-stack avec déduplication par nom de stack (D-01, D-02)
+  const stacksDetectees = new Map();
+  for (const s of SENTINELLES) {
+    if (!stacksDetectees.has(s.stack) && fs.existsSync(path.join(chemin, s.fichier))) {
+      stacksDetectees.set(s.stack, { stack: s.stack, emoji: s.emoji });
+    }
+  }
+  const stacks = stacksDetectees.size > 0
+    ? Array.from(stacksDetectees.values())
+    : [{ stack: nom, emoji: null }]; // D-03 : fallback nom du dossier
+
+  // Extraction données git
+  const brancheRaw = hasGit ? gitExec('git rev-parse --abbrev-ref HEAD', chemin) : null;
+  const timestampRaw = hasGit ? gitExec('git log -1 --format=%ct', chemin) : null;
+  const jours = calculerJours(timestampRaw);
+  const branche = brancheRaw || (hasGit ? 'branche inconnue' : null);
+
+  // Statut GSD (Phase 2)
+  const statutGSD = lireStatutGSD(chemin);
+
+  return {
+    id,
+    nom,
+    chemin,
+    has_git:             hasGit,
+    stacks,
+    branche,
+    jours_depuis_commit: jours,
+    date_relative:       hasGit ? joursEnTexte(jours) : 'sans git',
+    rayon:               calculerRayon(jours),
+    opacite:             calculerOpacite(jours, hasGit),
+    has_gsd:             fs.existsSync(path.join(chemin, '.planning')),
+    has_state:           statutGSD !== null,
+    phase_gsd:           statutGSD,
+  };
 }
 
 /**
  * Scanne le workspace et retourne un tableau de ProjectRecord.
+ * Depth 2 : inclut les sous-projets ayant au moins une sentinelle (D-13 à D-16).
  * @returns {ProjectRecord[]}
  */
 function scannerWorkspace() {
-  return fs.readdirSync(WORKSPACE, { withFileTypes: true })
-    .filter(e => e.isDirectory() && !DOSSIERS_EXCLUS.has(e.name) && !e.name.startsWith('.'))
-    .map(e => {
-      const chemin = path.join(WORKSPACE, e.name);
-      const hasGit = fs.existsSync(path.join(chemin, '.git'));
+  const resultats = [];
 
-      // Détection multi-stack avec déduplication par nom de stack (D-01, D-02)
-      const stacksDetectees = new Map();
-      for (const s of SENTINELLES) {
-        if (!stacksDetectees.has(s.stack) && fs.existsSync(path.join(chemin, s.fichier))) {
-          stacksDetectees.set(s.stack, { stack: s.stack, emoji: s.emoji });
-        }
+  const entrees = fs.readdirSync(WORKSPACE, { withFileTypes: true })
+    .filter(e => e.isDirectory() && !DOSSIERS_EXCLUS.has(e.name) && !e.name.startsWith('.'));
+
+  for (const e of entrees) {
+    const chemin = path.join(WORKSPACE, e.name);
+
+    // Projet racine (depth 1)
+    resultats.push(construireRecord(chemin, e.name, e.name));
+
+    // Sous-projets (depth 2) — D-13 à D-16
+    try {
+      const sousEntrees = fs.readdirSync(chemin, { withFileTypes: true })
+        .filter(s => s.isDirectory() && !DOSSIERS_EXCLUS.has(s.name) && !s.name.startsWith('.'));
+
+      for (const s of sousEntrees) {
+        const sousChemin = path.join(chemin, s.name);
+        // D-14 : ignorer les sous-dossiers sans sentinelle
+        const aSentinelle = SENTINELLES.some(sent => fs.existsSync(path.join(sousChemin, sent.fichier)));
+        if (!aSentinelle) continue;
+
+        // D-15 : identifiant et nom = parent/sous-dossier
+        const sousId = `${e.name}/${s.name}`;
+        resultats.push(construireRecord(sousChemin, sousId, sousId));
       }
-      const stacks = stacksDetectees.size > 0
-        ? Array.from(stacksDetectees.values())
-        : [{ stack: e.name, emoji: null }]; // D-03 : fallback nom du dossier
+    } catch {
+      // Ignorer les erreurs de lecture des sous-dossiers (permissions, etc.)
+    }
+  }
 
-      // Extraction données git
-      const brancheRaw = hasGit ? gitExec('git rev-parse --abbrev-ref HEAD', chemin) : null;
-      const timestampRaw = hasGit ? gitExec('git log -1 --format=%ct', chemin) : null;
-      const jours = calculerJours(timestampRaw);
-      const branche = brancheRaw || (hasGit ? 'branche inconnue' : null);
-
-      return {
-        id:                 e.name,
-        nom:                e.name,
-        chemin,
-        has_git:            hasGit,
-        stacks,
-        branche,
-        jours_depuis_commit: jours,
-        date_relative:      hasGit ? joursEnTexte(jours) : 'sans git',
-        rayon:              calculerRayon(jours),
-        opacite:            calculerOpacite(jours, hasGit),
-        has_gsd:            fs.existsSync(path.join(chemin, '.planning')),
-      };
-    });
+  return resultats;
 }
 
-module.exports = { scannerWorkspace };
+module.exports = { scannerWorkspace, lireStatutGSD };
