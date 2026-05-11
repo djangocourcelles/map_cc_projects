@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map CC Projects</title>
+  <style>
+    /* Reset et base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #0d1117;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #carte { width: 100vw; height: 100vh; display: block; }
+
+    /* Curseurs */
+    .zoom-surface { cursor: grab; }
+    .zoom-surface:active { cursor: grabbing; }
+    .noeud { cursor: grab; }
+    .noeud.dragging { cursor: grabbing; }
+
+    /* Hover effect */
+    .noeud:hover circle {
+      filter: brightness(1.1);
+    }
+
+    /* Drag en cours : scale leger */
+    .noeud.dragging circle {
+      transform: scale(1.05);
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+
+    /* Etat vide */
+    #etat-vide {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #8b949e;
+      font-size: 14px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="carte"></div>
+  <div id="etat-vide">Aucun projet trouvé dans le workspace. Vérifiez le chemin configuré.</div>
+  <script src="/lib/d3.min.js"></script>
+  <script>
+    /* ===== Constantes et dimensions ===== */
+    const LARGEUR  = window.innerWidth;
+    const HAUTEUR  = window.innerHeight;
+    const CLE_LS   = 'map_cc_positions';
+    const RAYON_CERCLE_INITIAL = 200;
+
+    /* ===== Creation SVG et zones ===== */
+    const svg = d3.select('#carte')
+      .append('svg')
+      .attr('width', LARGEUR)
+      .attr('height', HAUTEUR);
+
+    // Surface de zoom (pitfall #2 : zoom sur rect de fond, pas sur les noeuds)
+    const zoomSurface = svg.append('rect')
+      .attr('class', 'zoom-surface')
+      .attr('width', LARGEUR)
+      .attr('height', HAUTEUR)
+      .attr('fill', 'transparent')
+      .style('pointer-events', 'all');
+
+    // Conteneur des noeuds (transforme par le zoom)
+    const viewport = svg.append('g').attr('class', 'viewport');
+
+    /* ===== Comportement zoom (VIS-02) ===== */
+    const zoom = d3.zoom()
+      .scaleExtent([0.2, 4])
+      .on('zoom', (event) => {
+        viewport.attr('transform', event.transform);
+      });
+    svg.call(zoom);
+
+    /* ===== Fonctions utilitaires ===== */
+    function sauvegarderPositions(nodes) {
+      const positions = {};
+      nodes.forEach(n => { positions[n.id] = { x: n.x, y: n.y }; });
+      localStorage.setItem(CLE_LS, JSON.stringify(positions));
+    }
+
+    function couleurStroke(d) {
+      if (!d.has_git) return '#6e7681';
+      if (d.jours_depuis_commit === null || d.jours_depuis_commit > 30) return '#30363d';
+      if (d.jours_depuis_commit <= 7) return '#58a6ff';
+      return '#484f58';
+    }
+
+    function largeurStroke(d) {
+      if (!d.has_git) return 1;
+      if (d.jours_depuis_commit === null || d.jours_depuis_commit > 30) return 1;
+      if (d.jours_depuis_commit <= 7) return 2;
+      return 1.5;
+    }
+
+    function labelStack(d) {
+      // Emojis ou vide si pas de stack connu
+      if (!d.stacks || d.stacks.length === 0) return '';
+      const avecEmoji = d.stacks.filter(s => s.emoji);
+      if (avecEmoji.length > 0) {
+        // Separateur : espace fine Unicode U+2009 (UI-SPEC multi-stack)
+        return avecEmoji.map(s => s.emoji).join(' ');
+      }
+      return '';
+    }
+
+    /* ===== Simulation D3 principale ===== */
+    function lancerSimulation(nodes) {
+      /* 1. Simulation */
+      const simulation = d3.forceSimulation(nodes)
+        .force('center', d3.forceCenter(LARGEUR / 2, HAUTEUR / 2))
+        .force('repulsion', d3.forceManyBody().strength(-120))
+        .force('collision', d3.forceCollide(d => d.rayon + 8))
+        .alphaDecay(0.05)
+        .on('tick', mettreAJour)
+        .on('end', () => {
+          // Pitfall #4 : arreter apres stabilisation
+          simulation.alphaTarget(0).stop();
+          sauvegarderPositions(nodes);
+        });
+
+      /* 2. Rendu noeuds avec key function (pitfall #5) */
+      const noeuds = viewport.selectAll('g.noeud')
+        .data(nodes, d => d.id)
+        .join(
+          enter => {
+            const g = enter.append('g').attr('class', 'noeud');
+
+            // Cercle principal
+            g.append('circle')
+              .attr('r', d => d.rayon)
+              .attr('fill', '#161b22')
+              .attr('stroke', d => couleurStroke(d))
+              .attr('stroke-width', d => largeurStroke(d))
+              .attr('stroke-dasharray', d => d.has_git ? null : '4 2')
+              .attr('opacity', d => d.opacite);
+
+            // Emoji(s) de stack (au-dessus du nom)
+            g.append('text')
+              .attr('class', 'emoji-stack')
+              .attr('text-anchor', 'middle')
+              .attr('dy', '-14px')
+              .attr('font-size', '14px')
+              .attr('fill', '#c9d1d9')
+              .attr('opacity', d => d.opacite)
+              .text(d => labelStack(d));
+
+            // Nom du projet (D-09 : pas de troncature)
+            g.append('text')
+              .attr('class', 'nom-projet')
+              .attr('text-anchor', 'middle')
+              .attr('dy', '4px')
+              .attr('font-size', '13px')
+              .attr('font-weight', '600')
+              .attr('fill', '#c9d1d9')
+              .attr('opacity', d => d.opacite)
+              .text(d => d.nom);
+
+            // Meta : branche + date relative
+            g.append('text')
+              .attr('class', 'meta-projet')
+              .attr('text-anchor', 'middle')
+              .attr('dy', '18px')
+              .attr('font-size', '11px')
+              .attr('font-family', 'monospace')
+              .attr('fill', '#8b949e')
+              .attr('opacity', d => d.opacite)
+              .text(d => d.has_git
+                ? `${d.branche || 'branche inconnue'} · ${d.date_relative}`
+                : 'sans git');
+
+            return g;
+          },
+          update => update,
+          exit => exit.remove()  // pitfall #5
+        );
+
+      /* 3. Drag (pitfall #2 : stopPropagation) */
+      // Pitfall #2 : stopPropagation sur mousedown pour eviter le pan du canvas pendant le drag de bulle
+      noeuds.on('mousedown', event => event.stopPropagation())
+        .call(d3.drag()
+          .on('start', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart(); // pitfall #4
+            d.fx = d.x;
+            d.fy = d.y;
+            const noeud = event.sourceEvent.target.closest('.noeud');
+            if (noeud) d3.select(noeud).classed('dragging', true);
+          })
+          .on('drag', (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0); // pitfall #4 : sans .stop() pour laisser decroitre
+            d.fx = null;
+            d.fy = null;
+            const noeud = event.sourceEvent.target.closest('.noeud');
+            if (noeud) d3.select(noeud).classed('dragging', false);
+            sauvegarderPositions(nodes);
+          })
+        );
+
+      /* 4. Tick : mise a jour des positions */
+      function mettreAJour() {
+        noeuds.attr('transform', d => `translate(${d.x},${d.y})`);
+      }
+    }
+
+    /* ===== Chargement des donnees et fusion localStorage (pitfall #3 : AVANT D3) ===== */
+    fetch('/api/projects')
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(projets => {
+        if (projets.length === 0) {
+          document.getElementById('etat-vide').style.display = 'block';
+          return;
+        }
+
+        // Fusion positions sauvegardees -- AVANT de passer a D3 (pitfall #3)
+        const positionsSauvees = JSON.parse(localStorage.getItem(CLE_LS) || '{}');
+        const n = projets.length;
+
+        projets.forEach((p, i) => {
+          if (positionsSauvees[p.id]) {
+            // Positions restaurees depuis localStorage
+            p.x = positionsSauvees[p.id].x;
+            p.y = positionsSauvees[p.id].y;
+          } else {
+            // Layout initial en cercle centre (D-07)
+            const angle = (2 * Math.PI * i) / n;
+            p.x = LARGEUR / 2 + RAYON_CERCLE_INITIAL * Math.cos(angle);
+            p.y = HAUTEUR / 2 + RAYON_CERCLE_INITIAL * Math.sin(angle);
+          }
+        });
+
+        lancerSimulation(projets);
+      })
+      .catch(err => console.error('Impossible de charger les projets :', err.message));
+  </script>
+</body>
+</html>
