@@ -2,7 +2,7 @@
 
 const chokidar  = require('chokidar');
 const WebSocket = require('ws');
-const { scannerWorkspace } = require('./scanner');
+const { scannerWorkspace, invaliderCache } = require('./scanner');
 
 const WORKSPACE = '/Users/laurent/Documents/CLAUDE_PROJETS';
 const PATTERNS  = [
@@ -27,6 +27,7 @@ function demarrerWatcher(wss) {
   });
 
   function rescanEtBroadcast() {
+    invaliderCache(); // Forcer un rescan complet à chaque changement détecté
     let projets;
     try {
       projets = scannerWorkspace();  // D-08 : rescan total

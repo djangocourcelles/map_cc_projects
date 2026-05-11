@@ -141,12 +141,28 @@ function construireRecord(chemin, id, nom) {
   };
 }
 
+// Cache simple pour éviter que chaque requête HTTP bloque la boucle d'événements
+// avec de multiples execSync (WR-01). TTL = 30 secondes.
+let _cacheResultats = null;
+let _cacheTsMs = 0;
+const CACHE_TTL_MS = 30_000;
+
+/** Invalide manuellement le cache (appelé par le watcher à chaque changement). */
+function invaliderCache() {
+  _cacheResultats = null;
+}
+
 /**
  * Scanne le workspace et retourne un tableau de ProjectRecord.
  * Depth 2 : inclut les sous-projets ayant au moins une sentinelle (D-13 à D-16).
+ * Le résultat est mis en cache 30 s pour limiter les appels execSync bloquants.
  * @returns {ProjectRecord[]}
  */
 function scannerWorkspace() {
+  const maintenant = Date.now();
+  if (_cacheResultats && (maintenant - _cacheTsMs) < CACHE_TTL_MS) {
+    return _cacheResultats;
+  }
   const resultats = [];
 
   const entrees = fs.readdirSync(WORKSPACE, { withFileTypes: true })
@@ -178,7 +194,9 @@ function scannerWorkspace() {
     }
   }
 
+  _cacheResultats = resultats;
+  _cacheTsMs = Date.now();
   return resultats;
 }
 
-module.exports = { scannerWorkspace, lireStatutGSD };
+module.exports = { scannerWorkspace, lireStatutGSD, invaliderCache };
