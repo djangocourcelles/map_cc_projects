@@ -45,7 +45,10 @@ const server = http.createServer((req, res) => {
   const filePath = path.join(PUBLIC_DIR, fichierRelatif);
 
   // Sécurité : empêcher les traversées de répertoire hors de PUBLIC_DIR
-  if (!filePath.startsWith(PUBLIC_DIR)) {
+  // On compare avec le séparateur de chemin pour éviter qu'un préfixe de dossier
+  // (/foo/public) soit confondu avec un dossier voisin (/foo/public2).
+  const SAFE_PREFIX = PUBLIC_DIR.endsWith(path.sep) ? PUBLIC_DIR : PUBLIC_DIR + path.sep;
+  if (!filePath.startsWith(SAFE_PREFIX) && filePath !== PUBLIC_DIR) {
     res.writeHead(403);
     res.end('Accès refusé');
     return;
