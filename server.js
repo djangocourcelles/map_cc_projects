@@ -1,0 +1,84 @@
+'use strict';
+
+const http    = require('http');
+const fs      = require('fs');
+const path    = require('path');
+const { exec } = require('child_process');
+const { scannerWorkspace } = require('./scanner');
+
+// WebSocket : Phase 2 (watcher.js)
+
+const PORT       = process.env.PORT || 3000;
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js':   'application/javascript',
+  '.css':  'text/css',
+  '.json': 'application/json',
+  '.svg':  'image/svg+xml',
+};
+
+const server = http.createServer((req, res) => {
+  // Route API — GET /api/projects
+  if (req.method === 'GET' && req.url === '/api/projects') {
+    let projets;
+    try {
+      projets = scannerWorkspace();
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ erreur: err.message }));
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.end(JSON.stringify(projets));
+    return;
+  }
+
+  // Fichiers statiques
+  const urlNormalisee = req.url.split('?')[0]; // ignorer query strings
+  const fichierRelatif = urlNormalisee === '/' ? 'index.html' : urlNormalisee;
+  const filePath = path.join(PUBLIC_DIR, fichierRelatif);
+
+  // Sécurité : empêcher les traversées de répertoire hors de PUBLIC_DIR
+  if (!filePath.startsWith(PUBLIC_DIR)) {
+    res.writeHead(403);
+    res.end('Accès refusé');
+    return;
+  }
+
+  const ext = path.extname(filePath);
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      res.end('Fichier non trouvé');
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Type': MIME_TYPES[ext] || 'text/plain',
+    });
+    res.end(data);
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Serveur démarré : http://localhost:${PORT}`);
+  // Ouverture browser macOS natif — zéro dépendance (INFRA-02)
+  exec(`open http://localhost:${PORT}`, (err) => {
+    if (err) console.error('Impossible d\'ouvrir le browser :', err.message);
+  });
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(
+      `Port ${PORT} déjà utilisé. Arrêter le processus existant ou utiliser PORT=3001 node server.js`
+    );
+  } else {
+    console.error('Erreur serveur :', err.message);
+  }
+  process.exit(1);
+});
