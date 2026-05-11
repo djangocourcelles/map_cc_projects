@@ -71,6 +71,30 @@
     .leg-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
     .leg-dash  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
                  border: 1.5px dashed #6e7681; background: transparent; }
+    .leg-sep   { border-top: 1px solid #30363d; margin: 3px 0; }
+    .leg-cercle { border-radius: 50%; background: #3fb950; display: inline-block; flex-shrink: 0; }
+    .leg-anneau {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid; background: transparent;
+    }
+    .leg-anneau-dash {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+      background: transparent;
+      border: 2px dashed #444d56;
+    }
+
+    /* Dot WebSocket (D-12) */
+    #dot-ws {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #6e7681;
+      transition: background 0.3s ease;
+      z-index: 200;
+    }
   </style>
 </head>
 <body>
@@ -79,12 +103,23 @@
   <div id="tooltip"></div>
 
   <div id="legende">
-    <div class="leg-titre">Activité</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#3fb950"></div> ≤ 7 jours (actif)</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#d29922"></div> 8 – 30 jours</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#6e7681"></div> &gt; 30 jours</div>
-    <div class="leg-item"><div class="leg-dash"></div> Sans dépôt git</div>
+    <div class="leg-titre">Taille &mdash; activité</div>
+    <div class="leg-item"><span class="leg-cercle" style="width:18px;height:18px;opacity:0.7"></span> Aujourd'hui (50px)</div>
+    <div class="leg-item"><span class="leg-cercle" style="width:14px;height:14px;opacity:0.7"></span> &lt; 7 jours (40px)</div>
+    <div class="leg-item"><span class="leg-cercle" style="width:11px;height:11px;opacity:0.6"></span> &lt; 30 jours (30px)</div>
+    <div class="leg-item"><span class="leg-cercle" style="width:7px;height:7px;opacity:0.5;background:#6e7681"></span> &lt; 90 jours (20px)</div>
+    <div class="leg-item"><span class="leg-cercle" style="width:4px;height:4px;opacity:0.4;background:#6e7681"></span> Inactif (12px)</div>
+    <div class="leg-sep"></div>
+    <div class="leg-titre">Anneau &mdash; statut GSD</div>
+    <div class="leg-item"><span class="leg-anneau" style="border-color:#58a6ff"></span> En cours</div>
+    <div class="leg-item"><span class="leg-anneau" style="border-color:#3fb950"></span> Terminé</div>
+    <div class="leg-item"><span class="leg-anneau" style="border-color:#6e7681"></span> Non démarré</div>
+    <div class="leg-item"><span class="leg-anneau" style="border-color:#d29922"></span> En pause</div>
+    <div class="leg-item"><span class="leg-anneau" style="border-color:#f85149"></span> Bloqué</div>
+    <div class="leg-item"><span class="leg-anneau-dash"></span> Sans STATE.md</div>
   </div>
+
+  <div id="dot-ws" title="WebSocket"></div>
 
   <script src="/lib/d3.min.js"></script>
   <script>
@@ -149,7 +184,31 @@
     function labelStack(d) {
       if (!d.stacks || d.stacks.length === 0) return '';
       const avecEmoji = d.stacks.filter(s => s.emoji);
-      return avecEmoji.map(s => s.emoji).join(' ');
+      return avecEmoji.map(s => s.emoji).join(' ');
+    }
+
+    /* ===== Couleurs GSD (D-04) ===== */
+    const COULEURS_GSD = {
+      'in-progress': '#58a6ff',
+      'complete':    '#3fb950',
+      'not-started': '#6e7681',
+      'paused':      '#d29922',
+      'blocked':     '#f85149',
+      'unknown':     '#6e7681',
+    };
+    const COULEUR_SANS_STATE = '#444d56';
+
+    function couleurGSD(d) {
+      if (!d.has_state) return COULEUR_SANS_STATE;
+      return COULEURS_GSD[d.phase_gsd] || COULEURS_GSD['unknown'];
+    }
+
+    /* ===== Dot WebSocket (D-12) ===== */
+    function dotWS(etat) {
+      const el = document.getElementById('dot-ws');
+      if (!el) return;
+      const couleurs = { vert: '#3fb950', orange: '#d29922', rouge: '#f85149' };
+      el.style.background = couleurs[etat] || '#6e7681';
     }
 
     /* ===== Tooltip ===== */
@@ -222,11 +281,80 @@
       });
     }
 
+    /* ===== Fonction de création d'un nœud (partagée enter/mettreAJourVisuels) ===== */
+    function creerNoeud(enter) {
+      const g = enter.append('g').attr('class', 'noeud');
+
+      // Halo pour les actifs (≤7j avec git)
+      g.append('circle')
+        .attr('class', 'halo')
+        .attr('r', d => (d.has_git && d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7)
+          ? d.rayon + 10 : 0)
+        .attr('fill', '#3fb95010')
+        .attr('stroke', 'none');
+
+      // Cercle principal
+      g.append('circle')
+        .attr('class', 'bulle')
+        .attr('r', d => d.rayon)
+        .attr('fill', d => couleur(d) + '1a')
+        .attr('stroke', d => couleur(d))
+        .attr('stroke-width', d => {
+          if (!d.has_git) return 1.5;
+          if (d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7) return 2.5;
+          return 2;
+        })
+        .attr('stroke-dasharray', d => d.has_git ? null : '5 4')
+        .attr('opacity', d => d.opacite !== undefined ? d.opacite : 1);
+
+      // Anneau GSD (VIS-05) — rendu après .bulle (z-order SVG)
+      g.append('circle')
+        .attr('class', 'anneau-gsd')
+        .attr('r', d => d.rayon + 3)
+        .attr('fill', 'none')
+        .attr('stroke-width', 3)
+        .attr('stroke', d => couleurGSD(d))
+        .attr('stroke-dasharray', d => d.has_state ? null : '5 4');
+
+      // Emojis stack
+      g.append('text')
+        .attr('class', 'emoji-stack')
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'middle')
+        .attr('y', d => labelStack(d) ? -6 : 0)
+        .attr('font-size', d => Math.max(11, d.rayon * 0.45) + 'px')
+        .text(d => labelStack(d));
+
+      // Nom du projet
+      g.append('text')
+        .attr('class', 'nom-projet')
+        .attr('text-anchor', 'middle')
+        .attr('y', d => d.rayon + 13)
+        .attr('font-size', '10px')
+        .attr('font-weight', '500')
+        .attr('fill', d => couleur(d))
+        .text(d => d.nom.length > 14 ? d.nom.slice(0, 13) + '…' : d.nom);
+
+      // Jours depuis commit
+      g.append('text')
+        .attr('class', 'label-jours')
+        .attr('text-anchor', 'middle')
+        .attr('y', d => d.rayon + 25)
+        .attr('font-size', '9px')
+        .attr('fill', d => couleur(d))
+        .attr('opacity', 0.7)
+        .text(d => labelJours(d));
+
+      return g;
+    }
+
     /* ===== Simulation ===== */
+    let simulation;
+
     function lancerSimulation(nodes) {
       dessinerAnneaux();
 
-      const simulation = d3.forceSimulation(nodes)
+      simulation = d3.forceSimulation(nodes)
         .force('radial',    d3.forceRadial(d => rayonCible(d), CX, CY).strength(0.55))
         .force('collision', d3.forceCollide(d => d.rayon + 6).strength(0.9))
         .force('center',    d3.forceCenter(CX, CY).strength(0.04))
@@ -241,61 +369,7 @@
       const noeuds = viewport.selectAll('g.noeud')
         .data(nodes, d => d.id)
         .join(
-          enter => {
-            const g = enter.append('g').attr('class', 'noeud');
-
-            // Halo pour les actifs (≤7j avec git)
-            g.append('circle')
-              .attr('class', 'halo')
-              .attr('r', d => (d.has_git && d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7)
-                ? d.rayon + 10 : 0)
-              .attr('fill', '#3fb95010')
-              .attr('stroke', 'none');
-
-            // Cercle principal
-            g.append('circle')
-              .attr('class', 'bulle')
-              .attr('r', d => d.rayon)
-              .attr('fill', d => couleur(d) + '1a')
-              .attr('stroke', d => couleur(d))
-              .attr('stroke-width', d => {
-                if (!d.has_git) return 1.5;
-                if (d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7) return 2.5;
-                return 2;
-              })
-              .attr('stroke-dasharray', d => d.has_git ? null : '5 4');
-
-            // Emojis stack
-            g.append('text')
-              .attr('class', 'emoji-stack')
-              .attr('text-anchor', 'middle')
-              .attr('dominant-baseline', 'middle')
-              .attr('y', d => labelStack(d) ? -6 : 0)
-              .attr('font-size', d => Math.max(11, d.rayon * 0.45) + 'px')
-              .text(d => labelStack(d));
-
-            // Nom du projet
-            g.append('text')
-              .attr('class', 'nom-projet')
-              .attr('text-anchor', 'middle')
-              .attr('y', d => d.rayon + 13)
-              .attr('font-size', '10px')
-              .attr('font-weight', '500')
-              .attr('fill', d => couleur(d))
-              .text(d => d.nom.length > 14 ? d.nom.slice(0, 13) + '…' : d.nom);
-
-            // Jours depuis commit
-            g.append('text')
-              .attr('class', 'label-jours')
-              .attr('text-anchor', 'middle')
-              .attr('y', d => d.rayon + 25)
-              .attr('font-size', '9px')
-              .attr('fill', d => couleur(d))
-              .attr('opacity', 0.7)
-              .text(d => labelJours(d));
-
-            return g;
-          },
+          enter => creerNoeud(enter),
           update => update,
           exit => exit.remove()
         );
@@ -328,6 +402,72 @@
       function mettreAJour() {
         noeuds.attr('transform', d => `translate(${d.x},${d.y})`);
       }
+    }
+
+    /* ===== Mise à jour visuels sans relancer simulation (D-10, Pitfall 3 + 4) ===== */
+    function mettreAJourVisuels(nouvellesDonnees) {
+      // Fusion positions sauvegardées AVANT toute opération D3 (Pitfall 3)
+      const positionsSauvees = JSON.parse(localStorage.getItem(CLE_LS) || '{}');
+      nouvellesDonnees.forEach(p => {
+        if (positionsSauvees[p.id]) {
+          // Mise à jour coordonnées uniquement — ne pas toucher fx/fy (drag en cours)
+          p.x = positionsSauvees[p.id].x;
+          p.y = positionsSauvees[p.id].y;
+        }
+      });
+
+      // Mise à jour D3 avec key function — join sans recréer la simulation (Pitfall 4)
+      const noeuds = viewport.selectAll('g.noeud')
+        .data(nouvellesDonnees, d => d.id)
+        .join(
+          enter => {
+            const g = creerNoeud(enter);
+            // Attacher événements aux nouveaux nœuds
+            g.on('mouseenter', (event, d) => afficherTooltip(event, d))
+              .on('mousemove',  (event)    => deplacerTooltip(event))
+              .on('mouseleave', ()         => masquerTooltip());
+            g.on('mousedown', e => { e.stopPropagation(); masquerTooltip(); })
+              .call(d3.drag()
+                .on('start', (event, d) => {
+                  if (!event.active) simulation.alphaTarget(0.3).restart();
+                  d.fx = d.x; d.fy = d.y;
+                  const el = event.sourceEvent?.target?.closest?.('.noeud');
+                  if (el) d3.select(el).classed('dragging', true);
+                })
+                .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+                .on('end', (event, d) => {
+                  if (!event.active) simulation.alphaTarget(0);
+                  d.fx = null; d.fy = null;
+                  const el = event.sourceEvent?.target?.closest?.('.noeud');
+                  if (el) d3.select(el).classed('dragging', false);
+                  sauvegarderPositions(nouvellesDonnees);
+                })
+              );
+            return g;
+          },
+          update => update,
+          exit => exit.remove()
+        );
+
+      // Transitions 400ms sur les attributs visuels (D-10)
+      noeuds.select('.bulle')
+        .transition().duration(400)
+        .attr('r', d => d.rayon)
+        .attr('opacity', d => d.opacite !== undefined ? d.opacite : 1);
+
+      noeuds.select('.anneau-gsd')
+        .transition().duration(400)
+        .attr('r', d => d.rayon + 3)
+        .attr('stroke', d => couleurGSD(d))
+        .attr('stroke-dasharray', d => d.has_state ? null : '5 4');
+
+      // Réajustement physique après changement de rayons (Pitfall 6)
+      if (simulation) {
+        simulation.force('collision', d3.forceCollide(d => d.rayon + 6).strength(0.9))
+          .alpha(0.1).restart();
+      }
+
+      sauvegarderPositions(nouvellesDonnees);
     }
 
     /* ===== Chargement + fusion localStorage (pitfall #3 : AVANT D3) ===== */
@@ -363,6 +503,53 @@
         document.getElementById('etat-vide').textContent = 'Erreur de chargement — serveur démarré ?';
         document.getElementById('etat-vide').style.display = 'block';
       });
+
+    /* ===== Client WebSocket (INT-04) ===== */
+    let delaiReconnect = 1000;
+    const DELAI_MAX_WS = 30000;
+    let wsInstance = null;
+
+    function connecterWS() {
+      // Éviter les doublons si reconnexion rapide
+      if (wsInstance && wsInstance.readyState === WebSocket.CONNECTING) return;
+
+      const ws = new WebSocket(`ws://localhost:${location.port || 3000}`);
+      wsInstance = ws;
+
+      ws.addEventListener('open', () => {
+        delaiReconnect = 1000;  // reset backoff
+        dotWS('vert');
+      });
+
+      ws.addEventListener('message', (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.type === 'mise_a_jour' && Array.isArray(msg.projets)) {
+            mettreAJourVisuels(msg.projets);
+          }
+        } catch (e) {
+          console.error('[ws] Message invalide :', e.message);
+        }
+      });
+
+      ws.addEventListener('close', () => {
+        wsInstance = null;
+        if (delaiReconnect > DELAI_MAX_WS) {
+          dotWS('rouge');
+          return;  // arrêt (D-11 : plafond 30s)
+        }
+        dotWS('orange');
+        setTimeout(() => {
+          delaiReconnect = Math.min(delaiReconnect * 2, DELAI_MAX_WS);
+          connecterWS();
+        }, delaiReconnect);
+      });
+
+      ws.addEventListener('error', () => ws.close());
+    }
+
+    // Démarrer la connexion WS après le chargement initial
+    connecterWS();
   </script>
 </body>
 </html>
