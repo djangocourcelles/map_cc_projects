@@ -28,7 +28,10 @@
   3. L'utilisateur peut zoomer, dézoomer et panoramiquer la carte à la molette et au drag
   4. L'utilisateur peut déplacer les bulles, et leurs positions sont restaurées au rechargement
   5. Chaque bulle affiche le nom, la stack tech détectée, la branche git courante et la date du dernier commit en relatif
-**Plans:** TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Backend Node.js : npm, scanner.js (extraction git + stack), server.js (API + statique + auto-browser)
+- [ ] 01-02-PLAN.md — Frontend D3.js : public/index.html (carte interactive, zoom/pan, drag, localStorage)
 **UI hint:** yes
 
 ### Phase 2: Live Data
@@ -60,7 +63,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Graph | 0/? | Not started | - |
+| 1. Core Graph | 0/2 | Planned | - |
 | 2. Live Data | 0/? | Not started | - |
 | 3. Interactions | 0/? | Not started | - |
 
@@ -91,3 +94,4 @@
 
 ---
 *Roadmap créée : 2026-05-10*
+*Mise à jour : 2026-05-11 — Phase 1 planifiée (2 plans)*

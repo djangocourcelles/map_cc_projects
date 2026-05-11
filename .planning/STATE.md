@@ -4,7 +4,7 @@
 Phase 1 — Core Graph
 
 ## Status
-Not started
+Ready to execute
 
 ## Project Reference
 See: .planning/PROJECT.md (updated 2026-05-10)
@@ -19,8 +19,8 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 | Field | Value |
 |-------|-------|
 | Phase | 1 — Core Graph |
-| Plan | None (not started) |
-| Status | Not started |
+| Plan | 2 plans créés (01-01, 01-02) |
+| Status | Ready to execute |
 | Progress | [ ] [ ] [ ] — 0/3 phases |
 
 ---
@@ -62,7 +62,7 @@ None.
 
 ## Session Continuity
 
-Last updated: 2026-05-11 (phase 1 context gathered)
-Stopped at: Phase 1 context gathered
-Resume file: `.planning/phases/01-core-graph/01-CONTEXT.md`
-Next action: `/gsd-plan-phase 1`
+Last updated: 2026-05-11 (phase 1 planifiée)
+Stopped at: Phase 1 plans vérifiés (2 plans, 2 vagues)
+Resume file: `.planning/phases/01-core-graph/`
+Next action: `/gsd-execute-phase 1`
