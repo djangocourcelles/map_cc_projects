@@ -8,6 +8,11 @@ const WORKSPACE = '/Users/laurent/Documents/CLAUDE_PROJETS';
 const PATTERNS  = [
   `${WORKSPACE}/**/.planning/STATE.md`,
   `${WORKSPACE}/**/.git/COMMIT_EDITMSG`,
+  // WR-06 : détecter l'apparition/suppression de projets (nouveaux dossiers)
+  `${WORKSPACE}/*/CLAUDE.md`,
+  `${WORKSPACE}/*/package.json`,
+  `${WORKSPACE}/*/requirements.txt`,
+  `${WORKSPACE}/*/pyproject.toml`,
 ];
 
 /**
