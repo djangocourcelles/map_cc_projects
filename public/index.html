@@ -214,6 +214,15 @@
     /* ===== Tooltip ===== */
     const tooltip = document.getElementById('tooltip');
 
+    /** Échappe les caractères HTML pour prévenir les injections XSS. */
+    function esc(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     function afficherTooltip(event, d) {
       const c = couleur(d);
       const stacks = labelStack(d);
@@ -221,14 +230,14 @@
       const branche = d.has_git && d.branche ? d.branche : null;
 
       tooltip.innerHTML = `
-        <div class="tt-nom">${d.nom}</div>
+        <div class="tt-nom">${esc(d.nom)}</div>
         ${stacks ? `<div class="tt-row"><span style="font-size:14px">${stacks}</span></div>` : ''}
         <div class="tt-row">
           <div class="tt-dot" style="background:${c}"></div>
           <span>${jours}</span>
-          ${branche ? `<span style="color:#6e7681">·</span><span style="font-family:monospace;font-size:11px">${branche}</span>` : ''}
+          ${branche ? `<span style="color:#6e7681">·</span><span style="font-family:monospace;font-size:11px">${esc(branche)}</span>` : ''}
         </div>
-        ${d.date_relative && d.has_git ? `<div class="tt-row" style="margin-left:13px">${d.date_relative}</div>` : ''}
+        ${d.date_relative && d.has_git ? `<div class="tt-row" style="margin-left:13px">${esc(d.date_relative)}</div>` : ''}
         ${d.has_gsd ? '<div class="tt-gsd">✦ GSD actif</div>' : ''}
       `;
       tooltip.classList.add('visible');
