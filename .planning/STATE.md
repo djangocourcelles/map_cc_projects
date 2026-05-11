@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Plan 01-01 terminé — prêt pour 01-02
-last_updated: "2026-05-11T16:05:00Z"
+stopped_at: Phase 01 complète -- prêt pour Phase 02 (live-data)
+last_updated: "2026-05-11T16:20:00Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 17
+  completed_plans: 2
+  percent: 33
 ---
 
 # State — Map CC Projects
@@ -34,14 +34,14 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 
 ## Current Position
 
-Phase: 01 (core-graph) — EXECUTING
-Plan: 2 of 2
+Phase: 01 (core-graph) — COMPLETE
+Plan: 2/2 terminé
 | Field | Value |
 |-------|-------|
 | Phase | 1 — Core Graph |
-| Plan | 01-01 terminé, 01-02 à exécuter |
-| Status | In progress |
-| Progress | [x] [ ] [ ] — 0/3 phases (1/2 plans phase 1) |
+| Plan | 01-01 et 01-02 terminés |
+| Status | Phase 1 complète |
+| Progress | [x] [ ] [ ] — 1/3 phases (2/2 plans phase 1) |
 
 ---
 
@@ -51,7 +51,7 @@ Plan: 2 of 2
 |--------|-------|
 | Phases total | 3 |
 | Phases complete | 0 |
-| Plans complete | 1 |
+| Plans complete | 2 |
 | Requirements mapped | 16/16 |
 | Durée plan 01-01 | 15 min |
 
@@ -68,6 +68,8 @@ Plan: 2 of 2
 | 2026-05-10 | HTML/CSS/JS vanilla sans framework | One-shot simple, pas de build step, s'ouvre directement dans le browser |
 | 2026-05-11 | git log -1 --format=%ct sans guillemets | Évite problèmes shell sur macOS avec execSync |
 | 2026-05-11 | Déduplication multi-stack via Map() | Garantit unicité par nom de stack (D-02) |
+| 2026-05-11 | localStorage fusionné AVANT lancerSimulation() | Ordre critique -- évite l'écrasement des positions sauvegardées |
+| 2026-05-11 | alphaTarget(0) sans .stop() dans dragend | Permet décroissance naturelle de la simulation après relâche |
 
 ### Technical Notes
 
@@ -87,7 +89,7 @@ None.
 
 ## Session Continuity
 
-Last updated: 2026-05-11 (plan 01-01 exécuté)
-Stopped at: Plan 01-01 terminé — prêt pour 01-02
-Resume file: `.planning/phases/01-core-graph/01-02-PLAN.md`
-Next action: exécuter plan 01-02 (frontend D3.js)
+Last updated: 2026-05-11 (plan 01-02 exécuté -- Phase 01 complète)
+Stopped at: Phase 01 complète -- prêt pour Phase 02 (live-data)
+Resume file: `.planning/phases/02-live-data/` (à planifier)
+Next action: /gsd-plan-phase 2 pour planifier la Phase 02 (WebSocket + live data)

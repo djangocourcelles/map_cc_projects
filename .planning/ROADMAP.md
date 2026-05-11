@@ -9,7 +9,7 @@
 
 ## Phases
 
-- [ ] **Phase 1 : Core Graph** - Serveur Node.js + carte D3.js statique avec toutes les données projet
+- [x] **Phase 1 : Core Graph** - Serveur Node.js + carte D3.js statique avec toutes les données projet
 - [ ] **Phase 2 : Live Data** - Encodage visuel de l'activité et mise à jour temps réel via WebSocket
 - [ ] **Phase 3 : Interactions** - Tooltip, ouverture VS Code, filtrage par nom
 
@@ -31,7 +31,7 @@
 **Plans:** 2 plans
 Plans:
 - [x] 01-01-PLAN.md — Backend Node.js : npm, scanner.js (extraction git + stack), server.js (API + statique + auto-browser)
-- [ ] 01-02-PLAN.md — Frontend D3.js : public/index.html (carte interactive, zoom/pan, drag, localStorage)
+- [x] 01-02-PLAN.md — Frontend D3.js : public/index.html (carte interactive, zoom/pan, drag, localStorage)
 **UI hint:** yes
 
 ### Phase 2: Live Data
@@ -63,7 +63,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Graph | 1/2 | In progress | - |
+| 1. Core Graph | 2/2 | Complete | 2026-05-11 |
 | 2. Live Data | 0/? | Not started | - |
 | 3. Interactions | 0/? | Not started | - |
 
@@ -94,4 +94,4 @@ Plans:
 
 ---
 *Roadmap créée : 2026-05-10*
-*Mise à jour : 2026-05-11 — Plan 01-01 exécuté (backend Node.js)*
+*Mise à jour : 2026-05-11 — Phase 01 complète (01-01 backend Node.js + 01-02 frontend D3.js)*
