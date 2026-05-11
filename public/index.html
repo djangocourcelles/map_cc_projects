@@ -35,6 +35,28 @@
       text-align: center;
     }
 
+    /* Tooltip */
+    #tooltip {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 12px;
+      color: #e6edf3;
+      pointer-events: none;
+      max-width: 220px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    #tooltip.visible { display: block; }
+    .tt-nom   { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .tt-row   { display: flex; align-items: center; gap: 6px; color: #8b949e; margin-top: 3px; }
+    .tt-dot   { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .tt-gsd   { margin-top: 6px; padding-top: 6px; border-top: 1px solid #30363d;
+                font-size: 10px; color: #3fb950; }
+
     /* Légende */
     #legende {
       position: fixed; bottom: 16px; left: 16px;
@@ -54,6 +76,7 @@
 <body>
   <div id="carte"></div>
   <div id="etat-vide">Aucun projet trouvé dans le workspace.</div>
+  <div id="tooltip"></div>
 
   <div id="legende">
     <div class="leg-titre">Activité</div>
@@ -128,6 +151,43 @@
       const avecEmoji = d.stacks.filter(s => s.emoji);
       return avecEmoji.map(s => s.emoji).join(' ');
     }
+
+    /* ===== Tooltip ===== */
+    const tooltip = document.getElementById('tooltip');
+
+    function afficherTooltip(event, d) {
+      const c = couleur(d);
+      const stacks = labelStack(d);
+      const jours  = labelJours(d);
+      const branche = d.has_git && d.branche ? d.branche : null;
+
+      tooltip.innerHTML = `
+        <div class="tt-nom">${d.nom}</div>
+        ${stacks ? `<div class="tt-row"><span style="font-size:14px">${stacks}</span></div>` : ''}
+        <div class="tt-row">
+          <div class="tt-dot" style="background:${c}"></div>
+          <span>${jours}</span>
+          ${branche ? `<span style="color:#6e7681">·</span><span style="font-family:monospace;font-size:11px">${branche}</span>` : ''}
+        </div>
+        ${d.date_relative && d.has_git ? `<div class="tt-row" style="margin-left:13px">${d.date_relative}</div>` : ''}
+        ${d.has_gsd ? '<div class="tt-gsd">✦ GSD actif</div>' : ''}
+      `;
+      tooltip.classList.add('visible');
+      deplacerTooltip(event);
+    }
+
+    function deplacerTooltip(event) {
+      const marge = 14;
+      const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+      let x = event.clientX + marge;
+      let y = event.clientY + marge;
+      if (x + tw > LARGEUR - 8) x = event.clientX - tw - marge;
+      if (y + th > HAUTEUR - 8) y = event.clientY - th - marge;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top  = y + 'px';
+    }
+
+    function masquerTooltip() { tooltip.classList.remove('visible'); }
 
     function sauvegarderPositions(nodes) {
       const pos = {};
@@ -240,8 +300,14 @@
           exit => exit.remove()
         );
 
+      /* Tooltip hover */
+      noeuds
+        .on('mouseenter', (event, d) => afficherTooltip(event, d))
+        .on('mousemove',  (event)    => deplacerTooltip(event))
+        .on('mouseleave', ()         => masquerTooltip());
+
       /* Drag (pitfall #2 : stopPropagation sur mousedown) */
-      noeuds.on('mousedown', e => e.stopPropagation())
+      noeuds.on('mousedown', e => { e.stopPropagation(); masquerTooltip(); })
         .call(d3.drag()
           .on('start', (event, d) => {
             if (!event.active) simulation.alphaTarget(0.3).restart();
