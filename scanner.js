@@ -7,6 +7,10 @@ const { execSync } = require('child_process');
 const WORKSPACE = '/Users/laurent/Documents/CLAUDE_PROJETS';
 const DOSSIERS_EXCLUS = new Set(['venv', 'node_modules', '.git', 'dist', '__pycache__']);
 
+// Exclure le répertoire courant (map_project lui-même) du scan pour éviter
+// qu'il se retrouve comme nœud sur sa propre carte (WR-02).
+const NOM_DOSSIER_COURANT = path.basename(__dirname);
+
 const SENTINELLES = [
   { fichier: 'package.json',     stack: 'Node.js', emoji: '🟢' },
   { fichier: 'requirements.txt', stack: 'Python',  emoji: '🐍' },
@@ -166,7 +170,11 @@ function scannerWorkspace() {
   const resultats = [];
 
   const entrees = fs.readdirSync(WORKSPACE, { withFileTypes: true })
-    .filter(e => e.isDirectory() && !DOSSIERS_EXCLUS.has(e.name) && !e.name.startsWith('.'));
+    .filter(e => e.isDirectory()
+      && !DOSSIERS_EXCLUS.has(e.name)
+      && !e.name.startsWith('.')
+      && e.name !== NOM_DOSSIER_COURANT  // WR-02 : exclure map_project lui-même
+    );
 
   for (const e of entrees) {
     const chemin = path.join(WORKSPACE, e.name);
