@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Phase 01 complète -- prêt pour Phase 02 (live-data)
-last_updated: "2026-05-11T16:20:00Z"
+stopped_at: Phase 02 context gathered — prêt pour /gsd-plan-phase 2
+last_updated: "2026-05-11T17:00:00Z"
 progress:
   total_phases: 3
   completed_phases: 1
@@ -89,7 +89,7 @@ None.
 
 ## Session Continuity
 
-Last updated: 2026-05-11 (plan 01-02 exécuté -- Phase 01 complète)
-Stopped at: Phase 01 complète -- prêt pour Phase 02 (live-data)
-Resume file: `.planning/phases/02-live-data/` (à planifier)
+Last updated: 2026-05-11 (contexte Phase 02 capturé — discuss-phase terminé)
+Stopped at: Phase 02 context gathered — prêt pour /gsd-plan-phase 2
+Resume file: `.planning/phases/02-live-data/02-CONTEXT.md`
 Next action: /gsd-plan-phase 2 pour planifier la Phase 02 (WebSocket + live data)
