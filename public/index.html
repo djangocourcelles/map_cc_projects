@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Map CC Projects</title>
   <style>
-    /* Reset et base */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
@@ -14,25 +13,18 @@
     }
     #carte { width: 100vw; height: 100vh; display: block; }
 
-    /* Curseurs */
     .zoom-surface { cursor: grab; }
     .zoom-surface:active { cursor: grabbing; }
     .noeud { cursor: grab; }
     .noeud.dragging { cursor: grabbing; }
 
-    /* Hover effect */
-    .noeud:hover circle {
-      filter: brightness(1.1);
-    }
-
-    /* Drag en cours : scale leger */
-    .noeud.dragging circle {
+    .noeud:hover .bulle { filter: brightness(1.15); }
+    .noeud.dragging .bulle {
       transform: scale(1.05);
       transform-origin: center;
       transform-box: fill-box;
     }
 
-    /* Etat vide */
     #etat-vide {
       display: none;
       position: fixed;
@@ -42,26 +34,55 @@
       font-size: 14px;
       text-align: center;
     }
+
+    /* Légende */
+    #legende {
+      position: fixed; bottom: 16px; left: 16px;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 11px; color: #8b949e;
+      display: flex; flex-direction: column; gap: 5px;
+      pointer-events: none;
+    }
+    .leg-titre { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+    .leg-item  { display: flex; align-items: center; gap: 8px; }
+    .leg-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .leg-dash  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+                 border: 1.5px dashed #6e7681; background: transparent; }
   </style>
 </head>
 <body>
   <div id="carte"></div>
-  <div id="etat-vide">Aucun projet trouvé dans le workspace. Vérifiez le chemin configuré.</div>
+  <div id="etat-vide">Aucun projet trouvé dans le workspace.</div>
+
+  <div id="legende">
+    <div class="leg-titre">Activité</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#3fb950"></div> ≤ 7 jours (actif)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#d29922"></div> 8 – 30 jours</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#6e7681"></div> &gt; 30 jours</div>
+    <div class="leg-item"><div class="leg-dash"></div> Sans dépôt git</div>
+  </div>
+
   <script src="/lib/d3.min.js"></script>
   <script>
-    /* ===== Constantes et dimensions ===== */
-    const LARGEUR  = window.innerWidth;
-    const HAUTEUR  = window.innerHeight;
-    const CLE_LS   = 'map_cc_positions';
-    const RAYON_CERCLE_INITIAL = 200;
+    const LARGEUR = window.innerWidth;
+    const HAUTEUR = window.innerHeight;
+    const CLE_LS  = 'map_cc_positions';
+    const CX = LARGEUR / 2, CY = HAUTEUR / 2;
+    const BASE = Math.min(LARGEUR, HAUTEUR);
 
-    /* ===== Creation SVG et zones ===== */
+    // Rayons cibles des 3 zones (forceRadial)
+    const RAYON_ACTIF    = 0;
+    const RAYON_RECENT   = BASE * 0.22;
+    const RAYON_INACTIF  = BASE * 0.40;
+
+    /* ===== SVG ===== */
     const svg = d3.select('#carte')
       .append('svg')
       .attr('width', LARGEUR)
       .attr('height', HAUTEUR);
 
-    // Surface de zoom (pitfall #2 : zoom sur rect de fond, pas sur les noeuds)
+    // Surface de zoom (pitfall #2 : zoom sur rect de fond)
     const zoomSurface = svg.append('rect')
       .attr('class', 'zoom-surface')
       .attr('width', LARGEUR)
@@ -69,152 +90,181 @@
       .attr('fill', 'transparent')
       .style('pointer-events', 'all');
 
-    // Conteneur des noeuds (transforme par le zoom)
     const viewport = svg.append('g').attr('class', 'viewport');
 
-    /* ===== Comportement zoom (VIS-02) ===== */
+    /* ===== Zoom (VIS-02) ===== */
     const zoom = d3.zoom()
       .scaleExtent([0.2, 4])
-      .on('zoom', (event) => {
-        viewport.attr('transform', event.transform);
-      });
+      .on('zoom', e => viewport.attr('transform', e.transform));
     svg.call(zoom);
 
-    /* ===== Fonctions utilitaires ===== */
-    function sauvegarderPositions(nodes) {
-      const positions = {};
-      nodes.forEach(n => { positions[n.id] = { x: n.x, y: n.y }; });
-      localStorage.setItem(CLE_LS, JSON.stringify(positions));
+    /* ===== Utilitaires ===== */
+    function couleur(d) {
+      if (!d.has_git) return '#444d56';
+      const j = d.jours_depuis_commit;
+      if (j === null || j > 30) return '#6e7681';
+      if (j <= 7) return '#3fb950';
+      return '#d29922';
     }
 
-    function couleurStroke(d) {
-      if (!d.has_git) return '#6e7681';
-      if (d.jours_depuis_commit === null || d.jours_depuis_commit > 30) return '#30363d';
-      if (d.jours_depuis_commit <= 7) return '#58a6ff';
-      return '#484f58';
+    function rayonCible(d) {
+      if (!d.has_git) return RAYON_INACTIF;
+      const j = d.jours_depuis_commit;
+      if (j === null || j > 30) return RAYON_INACTIF;
+      if (j <= 7) return RAYON_ACTIF;
+      return RAYON_RECENT;
     }
 
-    function largeurStroke(d) {
-      if (!d.has_git) return 1;
-      if (d.jours_depuis_commit === null || d.jours_depuis_commit > 30) return 1;
-      if (d.jours_depuis_commit <= 7) return 2;
-      return 1.5;
+    function labelJours(d) {
+      if (!d.has_git) return 'sans git';
+      const j = d.jours_depuis_commit;
+      if (j === null) return '?';
+      if (j === 0) return 'auj.';
+      return j + 'j';
     }
 
     function labelStack(d) {
-      // Emojis ou vide si pas de stack connu
       if (!d.stacks || d.stacks.length === 0) return '';
       const avecEmoji = d.stacks.filter(s => s.emoji);
-      if (avecEmoji.length > 0) {
-        // Separateur : espace fine Unicode U+2009 (UI-SPEC multi-stack)
-        return avecEmoji.map(s => s.emoji).join(' ');
-      }
-      return '';
+      return avecEmoji.map(s => s.emoji).join(' ');
     }
 
-    /* ===== Simulation D3 principale ===== */
+    function sauvegarderPositions(nodes) {
+      const pos = {};
+      nodes.forEach(n => { pos[n.id] = { x: n.x, y: n.y }; });
+      localStorage.setItem(CLE_LS, JSON.stringify(pos));
+    }
+
+    /* ===== Anneaux guides (fond, dans le viewport) ===== */
+    function dessinerAnneaux() {
+      const zones = [
+        { r: BASE * 0.13, label: 'Actifs ≤ 7j',       c: '#3fb950' },
+        { r: BASE * 0.30, label: 'Récents ≤ 30j',      c: '#d29922' },
+        { r: BASE * 0.48, label: 'Inactifs / sans git', c: '#6e7681' },
+      ];
+      const g = viewport.append('g').attr('class', 'anneaux');
+      zones.forEach(z => {
+        g.append('circle')
+          .attr('cx', CX).attr('cy', CY)
+          .attr('r', z.r)
+          .attr('fill', 'none')
+          .attr('stroke', z.c)
+          .attr('stroke-width', 1)
+          .attr('stroke-dasharray', '4 7')
+          .attr('opacity', 0.18);
+        g.append('text')
+          .attr('x', CX + 6)
+          .attr('y', CY - z.r + 14)
+          .attr('fill', z.c)
+          .attr('font-size', '11px')
+          .attr('opacity', 0.45)
+          .text(z.label);
+      });
+    }
+
+    /* ===== Simulation ===== */
     function lancerSimulation(nodes) {
-      /* 1. Simulation */
+      dessinerAnneaux();
+
       const simulation = d3.forceSimulation(nodes)
-        .force('center', d3.forceCenter(LARGEUR / 2, HAUTEUR / 2))
-        .force('repulsion', d3.forceManyBody().strength(-120))
-        .force('collision', d3.forceCollide(d => d.rayon + 8))
+        .force('radial',    d3.forceRadial(d => rayonCible(d), CX, CY).strength(0.55))
+        .force('collision', d3.forceCollide(d => d.rayon + 6).strength(0.9))
+        .force('center',    d3.forceCenter(CX, CY).strength(0.04))
         .alphaDecay(0.05)
         .on('tick', mettreAJour)
         .on('end', () => {
-          // Pitfall #4 : arreter apres stabilisation
           simulation.alphaTarget(0).stop();
           sauvegarderPositions(nodes);
         });
 
-      /* 2. Rendu noeuds avec key function (pitfall #5) */
+      /* Rendu avec key function (pitfall #5) */
       const noeuds = viewport.selectAll('g.noeud')
         .data(nodes, d => d.id)
         .join(
           enter => {
             const g = enter.append('g').attr('class', 'noeud');
 
+            // Halo pour les actifs (≤7j avec git)
+            g.append('circle')
+              .attr('class', 'halo')
+              .attr('r', d => (d.has_git && d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7)
+                ? d.rayon + 10 : 0)
+              .attr('fill', '#3fb95010')
+              .attr('stroke', 'none');
+
             // Cercle principal
             g.append('circle')
+              .attr('class', 'bulle')
               .attr('r', d => d.rayon)
-              .attr('fill', '#161b22')
-              .attr('stroke', d => couleurStroke(d))
-              .attr('stroke-width', d => largeurStroke(d))
-              .attr('stroke-dasharray', d => d.has_git ? null : '4 2')
-              .attr('opacity', d => d.opacite);
+              .attr('fill', d => couleur(d) + '1a')
+              .attr('stroke', d => couleur(d))
+              .attr('stroke-width', d => {
+                if (!d.has_git) return 1.5;
+                if (d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7) return 2.5;
+                return 2;
+              })
+              .attr('stroke-dasharray', d => d.has_git ? null : '5 4');
 
-            // Emoji(s) de stack (au-dessus du nom)
+            // Emojis stack
             g.append('text')
               .attr('class', 'emoji-stack')
               .attr('text-anchor', 'middle')
-              .attr('dy', '-14px')
-              .attr('font-size', '14px')
-              .attr('fill', '#c9d1d9')
-              .attr('opacity', d => d.opacite)
+              .attr('dominant-baseline', 'middle')
+              .attr('y', d => labelStack(d) ? -6 : 0)
+              .attr('font-size', d => Math.max(11, d.rayon * 0.45) + 'px')
               .text(d => labelStack(d));
 
-            // Nom du projet (D-09 : pas de troncature)
+            // Nom du projet
             g.append('text')
               .attr('class', 'nom-projet')
               .attr('text-anchor', 'middle')
-              .attr('dy', '4px')
-              .attr('font-size', '13px')
-              .attr('font-weight', '600')
-              .attr('fill', '#c9d1d9')
-              .attr('opacity', d => d.opacite)
-              .text(d => d.nom);
+              .attr('y', d => d.rayon + 13)
+              .attr('font-size', '10px')
+              .attr('font-weight', '500')
+              .attr('fill', d => couleur(d))
+              .text(d => d.nom.length > 14 ? d.nom.slice(0, 13) + '…' : d.nom);
 
-            // Meta : branche + date relative
+            // Jours depuis commit
             g.append('text')
-              .attr('class', 'meta-projet')
+              .attr('class', 'label-jours')
               .attr('text-anchor', 'middle')
-              .attr('dy', '18px')
-              .attr('font-size', '11px')
-              .attr('font-family', 'monospace')
-              .attr('fill', '#8b949e')
-              .attr('opacity', d => d.opacite)
-              .text(d => d.has_git
-                ? `${d.branche || 'branche inconnue'} · ${d.date_relative}`
-                : 'sans git');
+              .attr('y', d => d.rayon + 25)
+              .attr('font-size', '9px')
+              .attr('fill', d => couleur(d))
+              .attr('opacity', 0.7)
+              .text(d => labelJours(d));
 
             return g;
           },
           update => update,
-          exit => exit.remove()  // pitfall #5
+          exit => exit.remove()
         );
 
-      /* 3. Drag (pitfall #2 : stopPropagation) */
-      // Pitfall #2 : stopPropagation sur mousedown pour eviter le pan du canvas pendant le drag de bulle
-      noeuds.on('mousedown', event => event.stopPropagation())
+      /* Drag (pitfall #2 : stopPropagation sur mousedown) */
+      noeuds.on('mousedown', e => e.stopPropagation())
         .call(d3.drag()
           .on('start', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart(); // pitfall #4
-            d.fx = d.x;
-            d.fy = d.y;
-            const noeud = event.sourceEvent.target.closest('.noeud');
-            if (noeud) d3.select(noeud).classed('dragging', true);
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+            const el = event.sourceEvent?.target?.closest?.('.noeud');
+            if (el) d3.select(el).classed('dragging', true);
           })
-          .on('drag', (event, d) => {
-            d.fx = event.x;
-            d.fy = event.y;
-          })
+          .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
           .on('end', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0); // pitfall #4 : sans .stop() pour laisser decroitre
-            d.fx = null;
-            d.fy = null;
-            const noeud = event.sourceEvent.target.closest('.noeud');
-            if (noeud) d3.select(noeud).classed('dragging', false);
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+            const el = event.sourceEvent?.target?.closest?.('.noeud');
+            if (el) d3.select(el).classed('dragging', false);
             sauvegarderPositions(nodes);
           })
         );
 
-      /* 4. Tick : mise a jour des positions */
       function mettreAJour() {
         noeuds.attr('transform', d => `translate(${d.x},${d.y})`);
       }
     }
 
-    /* ===== Chargement des donnees et fusion localStorage (pitfall #3 : AVANT D3) ===== */
+    /* ===== Chargement + fusion localStorage (pitfall #3 : AVANT D3) ===== */
     fetch('/api/projects')
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -226,26 +276,27 @@
           return;
         }
 
-        // Fusion positions sauvegardees -- AVANT de passer a D3 (pitfall #3)
+        // Fusion positions sauvegardées — AVANT lancerSimulation() (pitfall #3)
         const positionsSauvees = JSON.parse(localStorage.getItem(CLE_LS) || '{}');
         const n = projets.length;
-
         projets.forEach((p, i) => {
           if (positionsSauvees[p.id]) {
-            // Positions restaurees depuis localStorage
             p.x = positionsSauvees[p.id].x;
             p.y = positionsSauvees[p.id].y;
           } else {
-            // Layout initial en cercle centre (D-07)
             const angle = (2 * Math.PI * i) / n;
-            p.x = LARGEUR / 2 + RAYON_CERCLE_INITIAL * Math.cos(angle);
-            p.y = HAUTEUR / 2 + RAYON_CERCLE_INITIAL * Math.sin(angle);
+            p.x = CX + 180 * Math.cos(angle);
+            p.y = CY + 180 * Math.sin(angle);
           }
         });
 
         lancerSimulation(projets);
       })
-      .catch(err => console.error('Impossible de charger les projets :', err.message));
+      .catch(err => {
+        console.error('Impossible de charger les projets :', err.message);
+        document.getElementById('etat-vide').textContent = 'Erreur de chargement — serveur démarré ?';
+        document.getElementById('etat-vide').style.display = 'block';
+      });
   </script>
 </body>
 </html>
