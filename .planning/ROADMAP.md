@@ -30,7 +30,7 @@
   5. Chaque bulle affiche le nom, la stack tech détectée, la branche git courante et la date du dernier commit en relatif
 **Plans:** 2 plans
 Plans:
-- [ ] 01-01-PLAN.md — Backend Node.js : npm, scanner.js (extraction git + stack), server.js (API + statique + auto-browser)
+- [x] 01-01-PLAN.md — Backend Node.js : npm, scanner.js (extraction git + stack), server.js (API + statique + auto-browser)
 - [ ] 01-02-PLAN.md — Frontend D3.js : public/index.html (carte interactive, zoom/pan, drag, localStorage)
 **UI hint:** yes
 
@@ -63,7 +63,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Graph | 0/2 | Planned | - |
+| 1. Core Graph | 1/2 | In progress | - |
 | 2. Live Data | 0/? | Not started | - |
 | 3. Interactions | 0/? | Not started | - |
 
@@ -94,4 +94,4 @@ Plans:
 
 ---
 *Roadmap créée : 2026-05-10*
-*Mise à jour : 2026-05-11 — Phase 1 planifiée (2 plans)*
+*Mise à jour : 2026-05-11 — Plan 01-01 exécuté (backend Node.js)*
