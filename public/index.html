@@ -542,16 +542,18 @@
       });
 
       ws.addEventListener('close', () => {
+        // Ignorer les événements close d'instances orphelines (race condition)
+        if (wsInstance !== ws) return;
         wsInstance = null;
-        if (delaiReconnect > DELAI_MAX_WS) {
+        if (delaiReconnect >= DELAI_MAX_WS) {
           dotWS('rouge');
           return;  // arrêt (D-11 : plafond 30s)
         }
         dotWS('orange');
-        setTimeout(() => {
-          delaiReconnect = Math.min(delaiReconnect * 2, DELAI_MAX_WS);
-          connecterWS();
-        }, delaiReconnect);
+        // Capturer le délai AVANT de le doubler pour attendre la bonne durée
+        const delai = delaiReconnect;
+        delaiReconnect = Math.min(delaiReconnect * 2, DELAI_MAX_WS);
+        setTimeout(connecterWS, delai);
       });
 
       ws.addEventListener('error', () => ws.close());
