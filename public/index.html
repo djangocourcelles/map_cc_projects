@@ -260,7 +260,11 @@
     function sauvegarderPositions(nodes) {
       const pos = {};
       nodes.forEach(n => { pos[n.id] = { x: n.x, y: n.y }; });
-      localStorage.setItem(CLE_LS, JSON.stringify(pos));
+      try {
+        localStorage.setItem(CLE_LS, JSON.stringify(pos));
+      } catch (e) {
+        console.warn('[positions] Impossible de sauvegarder :', e.message);
+      }
     }
 
     /* ===== Anneaux guides (fond, dans le viewport) ===== */
