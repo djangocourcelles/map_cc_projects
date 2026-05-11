@@ -10,4 +10,4 @@ GitHub (palette dark), Notion (clarté des zones), D3 Observable (force simulati
 
 | # | Nom | Question | Gagnant | Tags |
 |---|-----|----------|---------|------|
-| 001 | structure-carte | Comment grouper les projets par activité ? | null | d3, clusters, couleurs |
+| 001 | structure-carte | Comment grouper les projets par activité ? | A — anneaux concentriques | d3, clusters, couleurs |

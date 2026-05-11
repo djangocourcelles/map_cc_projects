@@ -2,7 +2,7 @@
 sketch: 001
 name: structure-carte
 question: "Comment grouper visuellement les projets par état d'activité ?"
-winner: null
+winner: "A"
 tags: [d3, force-simulation, clusters, couleurs, activite]
 ---
 
