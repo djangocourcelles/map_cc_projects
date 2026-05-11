@@ -422,10 +422,13 @@
       // Fusion positions sauvegardées AVANT toute opération D3 (Pitfall 3)
       const positionsSauvees = JSON.parse(localStorage.getItem(CLE_LS) || '{}');
       nouvellesDonnees.forEach(p => {
-        if (positionsSauvees[p.id]) {
+        const pos = positionsSauvees[p.id];
+        // Valider x/y : doivent être des nombres finis pour éviter translate(NaN,NaN)
+        if (pos && typeof pos.x === 'number' && typeof pos.y === 'number'
+            && isFinite(pos.x) && isFinite(pos.y)) {
           // Mise à jour coordonnées uniquement — ne pas toucher fx/fy (drag en cours)
-          p.x = positionsSauvees[p.id].x;
-          p.y = positionsSauvees[p.id].y;
+          p.x = pos.x;
+          p.y = pos.y;
         }
       });
 
@@ -499,9 +502,12 @@
         const positionsSauvees = JSON.parse(localStorage.getItem(CLE_LS) || '{}');
         const n = projets.length;
         projets.forEach((p, i) => {
-          if (positionsSauvees[p.id]) {
-            p.x = positionsSauvees[p.id].x;
-            p.y = positionsSauvees[p.id].y;
+          const pos = positionsSauvees[p.id];
+          // Valider x/y : doivent être des nombres finis pour éviter translate(NaN,NaN)
+          if (pos && typeof pos.x === 'number' && typeof pos.y === 'number'
+              && isFinite(pos.x) && isFinite(pos.y)) {
+            p.x = pos.x;
+            p.y = pos.y;
           } else {
             const angle = (2 * Math.PI * i) / n;
             p.x = CX + 180 * Math.cos(angle);
