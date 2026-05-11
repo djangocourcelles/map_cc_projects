@@ -46,7 +46,8 @@ function calculerJours(timestampUnix) {
   if (!timestampUnix) return null;
   const ts = parseInt(timestampUnix, 10);
   if (isNaN(ts)) return null;
-  return Math.floor((Date.now() / 1000 - ts) / 86400);
+  const diff = Math.floor((Date.now() / 1000 - ts) / 86400);
+  return Math.max(0, diff); // garantir ≥ 0 (horloge déréglée ou timestamp futur)
 }
 
 /**
