@@ -48,6 +48,13 @@ Phase 2 fait passer la carte d'une photo statique à un tableau de bord vivant :
 - **D-11 :** Reconnexion WS avec **backoff exponentiel** : retry après 1s, 2s, 4s… plafonné à 30s, puis arrêt.
 - **D-12 :** Indicateur d'état WS : **petit dot coloré en bas à droite** de l'interface (vert = connecté, orange = reconnexion en cours, rouge = déconnecté).
 
+### Détection des sous-projets imbriqués (scanner)
+
+- **D-13 :** Le scanner descend **1 niveau supplémentaire** (depth 2 total) dans chaque projet racine pour détecter des sous-projets.
+- **D-14 :** Un sous-dossier est un sous-projet s'il contient un **fichier sentinelle** (même liste que les projets racine : `package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, etc.). CLAUDE.md seul ne suffit pas.
+- **D-15 :** Les sous-projets apparaissent comme des **bulles normales** avec un label préfixé : `parent/sous-projet` (p. ex. `Projet_BotAVV/app`). Même taille/couleur selon leur activité git.
+- **D-16 :** `DOSSIERS_EXCLUS` s'applique aussi en depth 2 : `node_modules`, `venv`, `.git`, `dist`, `__pycache__` ne sont jamais scannés.
+
 ### Claude's Discretion
 
 - Codes hex exacts des couleurs sémantiques (D-04) — à calibrer pour lisibilité sur fond sombre/clair.
