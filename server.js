@@ -6,7 +6,8 @@ const path    = require('path');
 const { exec } = require('child_process');
 const { scannerWorkspace } = require('./scanner');
 
-// WebSocket : Phase 2 (watcher.js)
+const { WebSocketServer } = require('ws');
+const { demarrerWatcher } = require('./watcher');
 
 const PORT       = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -64,12 +65,20 @@ const server = http.createServer((req, res) => {
   });
 });
 
+// WebSocket attaché au même port HTTP (INT-04)
+const wss = new WebSocketServer({ server });
+wss.on('connection', (ws) => {
+  ws.on('error', (err) => console.error('[ws] Erreur client :', err.message));
+});
+
 server.listen(PORT, () => {
   console.log(`Serveur démarré : http://localhost:${PORT}`);
   // Ouverture browser macOS natif — zéro dépendance (INFRA-02)
   exec(`open http://localhost:${PORT}`, (err) => {
     if (err) console.error('Impossible d\'ouvrir le browser :', err.message);
   });
+  demarrerWatcher(wss);
+  console.log('[watcher] Surveillance active — STATE.md + COMMIT_EDITMSG');
 });
 
 server.on('error', (err) => {
