@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in-progress
+status: ready_to_plan
 stopped_at: Phase 02 planned — prêt pour /gsd-execute-phase 2
 last_updated: "2026-05-11T18:00:00Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 2
   completed_plans: 2
-  percent: 33
+  percent: 67
 ---
 
 # State — Map CC Projects
@@ -34,8 +34,8 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 
 ## Current Position
 
-Phase: 01 (core-graph) — COMPLETE
-Plan: 2/2 terminé
+Phase: 3
+Plan: Not started
 | Field | Value |
 |-------|-------|
 | Phase | 1 — Core Graph |

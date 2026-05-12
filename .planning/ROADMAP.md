@@ -45,8 +45,8 @@ Plans:
   3. Quand un fichier du workspace change, la carte se met à jour dans les 3 secondes sans rechargement manuel
 **Plans:** 2 plans
 Plans:
-- [ ] 02-01-PLAN.md — Backend étendu : scanner.js (paliers rayon, statut GSD, depth 2), watcher.js (chokidar + WS broadcast), server.js (WebSocket)
-- [ ] 02-02-PLAN.md — Frontend Phase 2 : index.html (anneau GSD SVG, taille paliers, client WS backoff, dot état, transitions 400ms)
+- [x] 02-01-PLAN.md — Backend étendu : scanner.js (paliers rayon, statut GSD, depth 2), watcher.js (chokidar + WS broadcast), server.js (WebSocket)
+- [x] 02-02-PLAN.md — Frontend Phase 2 : index.html (anneau GSD SVG, taille paliers, client WS backoff, dot état, transitions 400ms)
 
 ### Phase 3: Interactions
 **Goal:** L'utilisateur peut explorer la carte et agir sur les projets directement depuis l'interface
