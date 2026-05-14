@@ -4,7 +4,7 @@ An interactive force-graph that maps all your **[Claude Code](https://claude.ai/
 
 > **Claude Code** is Anthropic's CLI for AI-assisted software development. If you work on multiple Claude Code projects, this tool gives you a real-time overview of all of them in a single browser tab.
 
-![Map CC Projects screenshot](screenshot.png)
+![Map CC Projects demo](demo.gif)
 
 ---
 
