@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_execute
-stopped_at: Phase 3 planned — 2 plans ready
-last_updated: "2026-05-14T00:00:00.000Z"
+stopped_at: Phase 3 context gathered
+last_updated: "2026-05-14T08:15:31.201Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 4
+  total_plans: 6
   completed_plans: 4
-  percent: 100
+  percent: 67
 ---
 
 # State — Map CC Projects
@@ -28,14 +28,14 @@ In progress — Plan 01-01 terminé
 See: .planning/PROJECT.md (updated 2026-05-10)
 
 **Core value:** Vue globale de tous les projets Claude Code en un coup d'oeil
-**Current focus:** Phase 01 — core-graph, Plan 02 (frontend D3)
+**Current focus:** Phase 03 — interactions
 
 ---
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (interactions) — EXECUTING
+Plan: 2 of 2
 | Field | Value |
 |-------|-------|
 | Phase | 1 — Core Graph |
@@ -51,7 +51,7 @@ Plan: Not started
 |--------|-------|
 | Phases total | 3 |
 | Phases complete | 0 |
-| Plans complete | 2 |
+| Plans complete | 5 |
 | Requirements mapped | 16/16 |
 | Durée plan 01-01 | 15 min |
 
@@ -89,7 +89,7 @@ None.
 
 ## Session Continuity
 
-Last updated: 2026-05-11 (contexte Phase 02 capturé — discuss-phase terminé)
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-interactions/03-CONTEXT.md
-Next action: /gsd-execute-phase 3 pour implémenter la Phase 03 (tooltip, clic VS Code, filtrage)
+Last updated: 2026-05-14 (Plan 03-01 exécuté)
+Stopped at: Plan 03-01 complété (backend last_commit + route /open)
+Resume file: .planning/phases/03-interactions/03-01-SUMMARY.md
+Next action: Exécuter 03-02 (frontend tooltip, clic VS Code, filtrage, thème dark/light)

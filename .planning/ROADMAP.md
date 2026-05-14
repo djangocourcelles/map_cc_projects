@@ -59,7 +59,7 @@ Plans:
   3. Saisir un terme dans le champ de recherche filtre les bulles visibles en temps réel
 **Plans:** 2 plans
 Plans:
-- [ ] 03-01-PLAN.md — Backend : scanner.js (last_commit), server.js (route GET /open)
+- [x] 03-01-PLAN.md — Backend : scanner.js (last_commit), server.js (route GET /open)
 - [ ] 03-02-PLAN.md — Frontend : index.html (tooltip redesign, clic VS Code + pulse, filtrage, thème dark/light)
 **UI hint:** yes
 
@@ -71,7 +71,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Core Graph | 2/2 | Complete | 2026-05-11 |
 | 2. Live Data | 0/2 | Ready to execute | - |
-| 3. Interactions | 0/2 | Ready to execute | - |
+| 3. Interactions | 1/2 | In progress | - |
 
 ---
 
