@@ -4,7 +4,7 @@ const http    = require('http');
 const fs      = require('fs');
 const path    = require('path');
 const { exec, execFile } = require('child_process');
-const { scannerWorkspace } = require('./scanner');
+const { scannerWorkspace, WORKSPACE } = require('./scanner');
 
 const { WebSocketServer } = require('ws');
 const { demarrerWatcher } = require('./watcher');
@@ -90,6 +90,7 @@ wss.on('connection', (ws) => {
 
 server.listen(PORT, () => {
   console.log(`Serveur démarré : http://localhost:${PORT}`);
+  console.log(`Workspace scanné : ${WORKSPACE}`);
   // Ouverture browser macOS natif — zéro dépendance (INFRA-02)
   exec(`open http://localhost:${PORT}`, (err) => {
     if (err) console.error('Impossible d\'ouvrir le browser :', err.message);

@@ -4,7 +4,7 @@ const fs   = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const WORKSPACE = '/Users/laurent/Documents/CLAUDE_PROJETS';
+const WORKSPACE = process.env.WORKSPACE || path.resolve(__dirname, '..');
 const DOSSIERS_EXCLUS = new Set(['venv', 'node_modules', '.git', 'dist', '__pycache__']);
 
 // Exclure le répertoire courant (map_project lui-même) du scan pour éviter
@@ -215,4 +215,4 @@ function scannerWorkspace() {
   return resultats;
 }
 
-module.exports = { scannerWorkspace, lireStatutGSD, invaliderCache };
+module.exports = { scannerWorkspace, lireStatutGSD, invaliderCache, WORKSPACE };

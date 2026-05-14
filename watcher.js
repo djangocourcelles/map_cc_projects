@@ -2,9 +2,8 @@
 
 const chokidar  = require('chokidar');
 const WebSocket = require('ws');
-const { scannerWorkspace, invaliderCache } = require('./scanner');
+const { scannerWorkspace, invaliderCache, WORKSPACE } = require('./scanner');
 
-const WORKSPACE = '/Users/laurent/Documents/CLAUDE_PROJETS';
 const PATTERNS  = [
   `${WORKSPACE}/**/.planning/STATE.md`,
   `${WORKSPACE}/**/.git/COMMIT_EDITMSG`,
