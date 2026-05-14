@@ -57,7 +57,10 @@ Plans:
   1. Survoler une bulle affiche un tooltip avec branche, dernier commit, stack et phase GSD
   2. Cliquer une bulle ouvre le dossier du projet dans VS Code
   3. Saisir un terme dans le champ de recherche filtre les bulles visibles en temps réel
-**Plans:** TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Backend : scanner.js (last_commit), server.js (route GET /open)
+- [ ] 03-02-PLAN.md — Frontend : index.html (tooltip redesign, clic VS Code + pulse, filtrage, thème dark/light)
 **UI hint:** yes
 
 ---
@@ -68,7 +71,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Core Graph | 2/2 | Complete | 2026-05-11 |
 | 2. Live Data | 0/2 | Ready to execute | - |
-| 3. Interactions | 0/? | Not started | - |
+| 3. Interactions | 0/2 | Ready to execute | - |
 
 ---
 
@@ -97,4 +100,4 @@ Plans:
 
 ---
 *Roadmap créée : 2026-05-10*
-*Mise à jour : 2026-05-11 — Phase 02 planifiée (02-01 backend + 02-02 frontend)*
+*Mise à jour : 2026-05-14 — Phase 03 planifiée (03-01 backend + 03-02 frontend)*
