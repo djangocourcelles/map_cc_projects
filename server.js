@@ -39,6 +39,20 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Route — GET /open (ouvre un projet dans VS Code — INT-02)
+  if (req.url.startsWith('/open') && req.method === 'GET') {
+    const params = new URL(req.url, 'http://localhost').searchParams;
+    const chemin = params.get('path') || '';
+    if (!chemin.startsWith('/Users/laurent/Documents/CLAUDE_PROJETS/')) {
+      res.writeHead(400); res.end('Chemin invalide'); return;
+    }
+    require('child_process').exec(`code "${chemin}"`, err => {
+      if (err) console.error('[open] Erreur VS Code :', err.message);
+    });
+    res.writeHead(204); res.end();
+    return;
+  }
+
   // Fichiers statiques
   const urlNormalisee = req.url.split('?')[0]; // ignorer query strings
   const fichierRelatif = urlNormalisee === '/' ? 'index.html' : urlNormalisee;
