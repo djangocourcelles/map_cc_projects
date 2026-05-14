@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,26 +34,26 @@
       background: var(--bg);
       font-family: system-ui, -apple-system, sans-serif;
     }
-    #carte { width: 100vw; height: 100vh; display: block; }
+    #canvas { width: 100vw; height: 100vh; display: block; }
 
     .zoom-surface { cursor: grab; }
     .zoom-surface:active { cursor: grabbing; }
-    .noeud { cursor: grab; }
-    .noeud.dragging { cursor: grabbing; }
+    .node { cursor: grab; }
+    .node.dragging { cursor: grabbing; }
 
-    .noeud:hover .bulle { filter: brightness(1.15); }
-    .noeud.dragging .bulle {
+    .node:hover .bubble { filter: brightness(1.15); }
+    .node.dragging .bubble {
       transform: scale(1.05);
       transform-origin: center;
       transform-box: fill-box;
     }
 
-    .bulle {
+    .bubble {
       transform-box: fill-box;
       transform-origin: center;
     }
 
-    #etat-vide {
+    #empty-state {
       display: none;
       position: fixed;
       top: 50%; left: 50%;
@@ -82,19 +82,19 @@
       opacity: 1;
       transform: translateY(0);
     }
-    .tt-nom    { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; line-height: 1.2; }
+    .tt-name   { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; line-height: 1.2; }
     .tt-stack  { font-size: 14px; margin-bottom: 4px; }
     .tt-row    { display: flex; align-items: center; gap: 6px; color: var(--text-muted); margin-top: 3px; font-size: 12px; line-height: 1.4; }
     .tt-dot    { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .tt-sep    { color: var(--text-muted); }
-    .tt-branche { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace; font-size: 11px; color: var(--text-code); }
+    .tt-branch { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace; font-size: 11px; color: var(--text-code); }
     .tt-commit { color: var(--text-muted); font-size: 12px; }
     .tt-gsd    { display: flex; align-items: center; gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); font-size: 11px; font-weight: 500; }
-    .tt-gsd-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .tt-gsd-dot   { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .tt-gsd-label { color: var(--text-primary); }
 
-    /* Overlay recherche */
-    #recherche-overlay {
+    /* Search overlay */
+    #search-overlay {
       position: fixed; top: 16px; left: 16px; z-index: 200;
       display: flex; align-items: center; gap: 8px;
       background: var(--surface); border: 1px solid var(--border);
@@ -102,24 +102,24 @@
       box-shadow: 0 2px 8px var(--shadow);
       transition: border-color 200ms ease, box-shadow 200ms ease;
     }
-    #recherche-overlay:focus-within {
+    #search-overlay:focus-within {
       border-color: #58a6ff;
       box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15), 0 2px 8px var(--shadow);
     }
-    .loupe {
+    .search-icon {
       font-size: 15px; color: var(--text-muted); line-height: 1; user-select: none;
     }
-    #recherche-input {
+    #search-input {
       background: transparent; border: none; outline: none;
       color: var(--text-primary);
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 13px; width: 160px; caret-color: #58a6ff;
     }
-    #recherche-input::placeholder { color: var(--text-muted); }
-    #recherche-input::-webkit-search-cancel-button { display: none; }
+    #search-input::placeholder { color: var(--text-muted); }
+    #search-input::-webkit-search-cancel-button { display: none; }
 
-    /* Légende */
-    #legende {
+    /* Legend */
+    #legend {
       position: fixed; bottom: 16px; left: 16px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 8px; padding: 10px 14px;
@@ -127,24 +127,24 @@
       display: flex; flex-direction: column; gap: 5px;
       pointer-events: none;
     }
-    .leg-titre { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
-    .leg-item  { display: flex; align-items: center; gap: 8px; }
-    .leg-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .leg-dash  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
-                 border: 1.5px dashed #6e7681; background: transparent; }
-    .leg-sep   { border-top: 1px solid var(--border); margin: 3px 0; }
-    .leg-cercle { border-radius: 50%; background: #3fb950; display: inline-block; flex-shrink: 0; }
-    .leg-anneau {
+    .leg-title  { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+    .leg-item   { display: flex; align-items: center; gap: 8px; }
+    .leg-dot    { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .leg-dash   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+                  border: 1.5px dashed #6e7681; background: transparent; }
+    .leg-sep    { border-top: 1px solid var(--border); margin: 3px 0; }
+    .leg-circle { border-radius: 50%; background: #3fb950; display: inline-block; flex-shrink: 0; }
+    .leg-ring {
       width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
       border: 2px solid; background: transparent;
     }
-    .leg-anneau-dash {
+    .leg-ring-dash {
       width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
       background: transparent;
       border: 2px dashed #444d56;
     }
 
-    /* Dot WebSocket (D-12) */
+    /* WebSocket status dot */
     #dot-ws {
       position: fixed;
       bottom: 12px;
@@ -159,102 +159,101 @@
   </style>
 </head>
 <body>
-  <div id="carte"></div>
-  <div id="etat-vide">Aucun projet trouvé dans le workspace.</div>
+  <div id="canvas"></div>
+  <div id="empty-state">No projects found in workspace.</div>
   <div id="tooltip"></div>
-  <div id="recherche-overlay">
-    <span class="loupe" aria-hidden="true">⌕</span>
-    <input id="recherche-input" type="search" placeholder="Filtrer les projets…"
+  <div id="search-overlay">
+    <span class="search-icon" aria-hidden="true">⌕</span>
+    <input id="search-input" type="search" placeholder="Filter projects…"
            autocomplete="off" spellcheck="false" />
   </div>
 
-  <div id="legende">
-    <div class="leg-titre">Taille &mdash; activité</div>
-    <div class="leg-item"><span class="leg-cercle" style="width:18px;height:18px;opacity:0.7"></span> Aujourd'hui (50px)</div>
-    <div class="leg-item"><span class="leg-cercle" style="width:14px;height:14px;opacity:0.7"></span> &lt; 7 jours (40px)</div>
-    <div class="leg-item"><span class="leg-cercle" style="width:11px;height:11px;opacity:0.6"></span> &lt; 30 jours (30px)</div>
-    <div class="leg-item"><span class="leg-cercle" style="width:7px;height:7px;opacity:0.5;background:#6e7681"></span> &lt; 90 jours (20px)</div>
-    <div class="leg-item"><span class="leg-cercle" style="width:4px;height:4px;opacity:0.4;background:#6e7681"></span> Inactif (12px)</div>
+  <div id="legend">
+    <div class="leg-title">Size &mdash; activity</div>
+    <div class="leg-item"><span class="leg-circle" style="width:18px;height:18px;opacity:0.7"></span> Today (50px)</div>
+    <div class="leg-item"><span class="leg-circle" style="width:14px;height:14px;opacity:0.7"></span> &lt; 7 days (40px)</div>
+    <div class="leg-item"><span class="leg-circle" style="width:11px;height:11px;opacity:0.6"></span> &lt; 30 days (30px)</div>
+    <div class="leg-item"><span class="leg-circle" style="width:7px;height:7px;opacity:0.5;background:#6e7681"></span> &lt; 90 days (20px)</div>
+    <div class="leg-item"><span class="leg-circle" style="width:4px;height:4px;opacity:0.4;background:#6e7681"></span> Inactive (12px)</div>
     <div class="leg-sep"></div>
-    <div class="leg-titre">Anneau &mdash; statut GSD</div>
-    <div class="leg-item"><span class="leg-anneau" style="border-color:#58a6ff"></span> En cours</div>
-    <div class="leg-item"><span class="leg-anneau" style="border-color:#3fb950"></span> Terminé</div>
-    <div class="leg-item"><span class="leg-anneau" style="border-color:#6e7681"></span> Non démarré</div>
-    <div class="leg-item"><span class="leg-anneau" style="border-color:#d29922"></span> En pause</div>
-    <div class="leg-item"><span class="leg-anneau" style="border-color:#f85149"></span> Bloqué</div>
-    <div class="leg-item"><span class="leg-anneau-dash"></span> Sans STATE.md</div>
+    <div class="leg-title">Ring &mdash; GSD status</div>
+    <div class="leg-item"><span class="leg-ring" style="border-color:#58a6ff"></span> In progress</div>
+    <div class="leg-item"><span class="leg-ring" style="border-color:#3fb950"></span> Complete</div>
+    <div class="leg-item"><span class="leg-ring" style="border-color:#6e7681"></span> Not started</div>
+    <div class="leg-item"><span class="leg-ring" style="border-color:#d29922"></span> Paused</div>
+    <div class="leg-item"><span class="leg-ring" style="border-color:#f85149"></span> Blocked</div>
+    <div class="leg-item"><span class="leg-ring-dash"></span> No STATE.md</div>
   </div>
 
   <div id="dot-ws" title="WebSocket"></div>
 
   <script src="/lib/d3.min.js"></script>
   <script>
-    const LARGEUR = window.innerWidth;
-    const HAUTEUR = window.innerHeight;
-    const CLE_LS  = 'map_cc_positions';
-    const CX = LARGEUR / 2, CY = HAUTEUR / 2;
-    const BASE = Math.min(LARGEUR, HAUTEUR);
+    const WIDTH  = window.innerWidth;
+    const HEIGHT = window.innerHeight;
+    const LS_KEY = 'map_cc_positions';
+    const CX = WIDTH / 2, CY = HEIGHT / 2;
+    const BASE = Math.min(WIDTH, HEIGHT);
 
-    // Rayons cibles des 3 zones (forceRadial)
-    const RAYON_ACTIF    = 0;
-    const RAYON_RECENT   = BASE * 0.22;
-    const RAYON_INACTIF  = BASE * 0.40;
+    // Target radii for the 3 force zones
+    const ZONE_ACTIVE   = 0;
+    const ZONE_RECENT   = BASE * 0.22;
+    const ZONE_INACTIVE = BASE * 0.40;
 
     /* ===== SVG ===== */
-    const svg = d3.select('#carte')
+    const svg = d3.select('#canvas')
       .append('svg')
-      .attr('width', LARGEUR)
-      .attr('height', HAUTEUR);
+      .attr('width', WIDTH)
+      .attr('height', HEIGHT);
 
-    // Surface de zoom (pitfall #2 : zoom sur rect de fond)
+    // Zoom target: background rect (not the nodes)
     const zoomSurface = svg.append('rect')
       .attr('class', 'zoom-surface')
-      .attr('width', LARGEUR)
-      .attr('height', HAUTEUR)
+      .attr('width', WIDTH)
+      .attr('height', HEIGHT)
       .attr('fill', 'transparent')
       .style('pointer-events', 'all');
 
     const viewport = svg.append('g').attr('class', 'viewport');
 
-    /* ===== Zoom (VIS-02) ===== */
+    /* ===== Zoom ===== */
     const zoom = d3.zoom()
       .scaleExtent([0.2, 4])
       .on('zoom', e => viewport.attr('transform', e.transform));
     svg.call(zoom);
 
-    /* ===== Utilitaires ===== */
-    function couleur(d) {
+    /* ===== Utilities ===== */
+    function nodeColor(d) {
       if (!d.has_git) return '#444d56';
-      const j = d.jours_depuis_commit;
-      if (j === null || j > 30) return '#6e7681';
-      if (j <= 7) return '#3fb950';
+      const days = d.days_since_commit;
+      if (days === null || days > 30) return '#6e7681';
+      if (days <= 7) return '#3fb950';
       return '#d29922';
     }
 
-    function rayonCible(d) {
-      if (!d.has_git) return RAYON_INACTIF;
-      const j = d.jours_depuis_commit;
-      if (j === null || j > 30) return RAYON_INACTIF;
-      if (j <= 7) return RAYON_ACTIF;
-      return RAYON_RECENT;
+    function targetZone(d) {
+      if (!d.has_git) return ZONE_INACTIVE;
+      const days = d.days_since_commit;
+      if (days === null || days > 30) return ZONE_INACTIVE;
+      if (days <= 7) return ZONE_ACTIVE;
+      return ZONE_RECENT;
     }
 
-    function labelJours(d) {
-      if (!d.has_git) return 'sans git';
-      const j = d.jours_depuis_commit;
-      if (j === null) return '?';
-      if (j === 0) return 'auj.';
-      return j + 'j';
+    function daysLabel(d) {
+      if (!d.has_git) return 'no git';
+      const days = d.days_since_commit;
+      if (days === null) return '?';
+      if (days === 0) return 'today';
+      return days + 'd';
     }
 
-    function labelStack(d) {
+    function stackLabel(d) {
       if (!d.stacks || d.stacks.length === 0) return '';
-      const avecEmoji = d.stacks.filter(s => s.emoji);
-      return avecEmoji.map(s => s.emoji).join(' ');
+      return d.stacks.filter(s => s.emoji).map(s => s.emoji).join(' ');
     }
 
-    /* ===== Couleurs GSD (D-04) ===== */
-    const COULEURS_GSD = {
+    /* ===== GSD colors ===== */
+    const GSD_COLORS = {
       'in-progress': '#58a6ff',
       'complete':    '#3fb950',
       'not-started': '#6e7681',
@@ -262,25 +261,25 @@
       'blocked':     '#f85149',
       'unknown':     '#6e7681',
     };
-    const COULEUR_SANS_STATE = '#444d56';
+    const COLOR_NO_STATE = '#444d56';
 
-    function couleurGSD(d) {
-      if (!d.has_state) return COULEUR_SANS_STATE;
-      return COULEURS_GSD[d.phase_gsd] || COULEURS_GSD['unknown'];
+    function gsdColor(d) {
+      if (!d.has_state) return COLOR_NO_STATE;
+      return GSD_COLORS[d.gsd_status] || GSD_COLORS['unknown'];
     }
 
-    /* ===== Dot WebSocket (D-12) ===== */
-    function dotWS(etat) {
+    /* ===== WebSocket status dot ===== */
+    function setWsDot(state) {
       const el = document.getElementById('dot-ws');
       if (!el) return;
-      const couleurs = { vert: '#3fb950', orange: '#d29922', rouge: '#f85149' };
-      el.style.background = couleurs[etat] || '#6e7681';
+      const colors = { green: '#3fb950', orange: '#d29922', red: '#f85149' };
+      el.style.background = colors[state] || '#6e7681';
     }
 
     /* ===== Tooltip ===== */
     const tooltip = document.getElementById('tooltip');
 
-    /** Échappe les caractères HTML pour prévenir les injections XSS. */
+    /** Escapes HTML characters to prevent XSS. */
     function esc(s) {
       return String(s ?? '')
         .replace(/&/g, '&amp;')
@@ -289,71 +288,73 @@
         .replace(/"/g, '&quot;');
     }
 
-    const LABELS_GSD = {
-      'in-progress': 'En cours', 'complete': 'Terminé',
-      'not-started': 'Non démarré', 'paused': 'En pause',
-      'blocked': 'Bloqué', 'unknown': 'GSD actif'
+    const GSD_LABELS = {
+      'in-progress': 'In progress',
+      'complete':    'Complete',
+      'not-started': 'Not started',
+      'paused':      'Paused',
+      'blocked':     'Blocked',
+      'unknown':     'GSD active',
     };
 
-    function afficherTooltip(event, d) {
-      const c = couleur(d);
-      const stacks = labelStack(d);
-      const branche = d.has_git && d.branche ? d.branche : null;
-      const gsdCouleur = couleurGSD(d);
-      const gsdLabel = d.has_state ? (LABELS_GSD[d.phase_gsd] || 'GSD actif') : null;
+    function showTooltip(event, d) {
+      const c        = nodeColor(d);
+      const stacks   = stackLabel(d);
+      const branch   = d.has_git && d.branch ? d.branch : null;
+      const gColor   = gsdColor(d);
+      const gLabel   = d.has_state ? (GSD_LABELS[d.gsd_status] || 'GSD active') : null;
       tooltip.innerHTML = [
-        `<div class="tt-nom">${esc(d.nom)}</div>`,
+        `<div class="tt-name">${esc(d.name)}</div>`,
         stacks ? `<div class="tt-stack">${stacks}</div>` : '',
         `<div class="tt-row">`,
           `<div class="tt-dot" style="background:${c}"></div>`,
-          `<span class="tt-date">${esc(d.date_relative)}</span>`,
-          branche ? `<span class="tt-sep">·</span><code class="tt-branche">${esc(branche)}</code>` : '',
+          `<span class="tt-date">${esc(d.date_label)}</span>`,
+          branch ? `<span class="tt-sep">·</span><code class="tt-branch">${esc(branch)}</code>` : '',
         `</div>`,
         d.last_commit ? `<div class="tt-row tt-commit">${esc(d.last_commit)}</div>` : '',
-        gsdLabel ? `<div class="tt-gsd"><span class="tt-gsd-dot" style="background:${gsdCouleur}"></span><span class="tt-gsd-label">${esc(gsdLabel)}</span></div>` : '',
+        gLabel ? `<div class="tt-gsd"><span class="tt-gsd-dot" style="background:${gColor}"></span><span class="tt-gsd-label">${esc(gLabel)}</span></div>` : '',
       ].join('');
       tooltip.classList.add('visible');
-      deplacerTooltip(event);
+      moveTooltip(event);
     }
 
-    const OFFSET_X = 12;
-    const OFFSET_Y = 20;
-    function deplacerTooltip(event) {
+    const OFFSET_X = 12, OFFSET_Y = 20;
+    function moveTooltip(event) {
       const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
       let x = event.clientX + OFFSET_X;
       let y = event.clientY - OFFSET_Y - th;
-      if (x + tw > window.innerWidth  - 8) x = event.clientX - tw - OFFSET_X;
-      if (y < 8)                           y = event.clientY + 8;
+      if (x + tw > window.innerWidth - 8) x = event.clientX - tw - OFFSET_X;
+      if (y < 8)                          y = event.clientY + 8;
       tooltip.style.left = x + 'px';
       tooltip.style.top  = y + 'px';
     }
 
-    function masquerTooltip() { tooltip.classList.remove('visible'); }
+    function hideTooltip() { tooltip.classList.remove('visible'); }
 
-    function pulserBulle(noeudG) {
-      d3.select(noeudG).select('.bulle')
+    function pulseNode(nodeEl) {
+      d3.select(nodeEl).select('.bubble')
         .transition().duration(120).attr('transform', 'scale(1.15)')
         .transition().duration(180).attr('transform', 'scale(1)');
     }
 
-    function sauvegarderPositions(nodes) {
+    function savePositions(nodes) {
       const pos = {};
       nodes.forEach(n => { pos[n.id] = { x: n.x, y: n.y }; });
       try {
-        localStorage.setItem(CLE_LS, JSON.stringify(pos));
+        localStorage.setItem(LS_KEY, JSON.stringify(pos));
       } catch (e) {
-        console.warn('[positions] Impossible de sauvegarder :', e.message);
+        console.warn('[positions] Could not save:', e.message);
       }
     }
 
-    /* ===== Anneaux guides (fond, dans le viewport) ===== */
-    function dessinerAnneaux() {
+    /* ===== Zone rings (drawn on the viewport background) ===== */
+    function drawRings() {
       const zones = [
-        { r: BASE * 0.13, label: 'Actifs ≤ 7j',       c: '#3fb950' },
-        { r: BASE * 0.30, label: 'Récents ≤ 30j',      c: '#d29922' },
-        { r: BASE * 0.48, label: 'Inactifs / sans git', c: '#6e7681' },
+        { r: BASE * 0.13, label: 'Active ≤ 7d',       c: '#3fb950' },
+        { r: BASE * 0.30, label: 'Recent ≤ 30d',       c: '#d29922' },
+        { r: BASE * 0.48, label: 'Inactive / no git',  c: '#6e7681' },
       ];
-      const g = viewport.append('g').attr('class', 'anneaux');
+      const g = viewport.append('g').attr('class', 'rings');
       zones.forEach(z => {
         g.append('circle')
           .attr('cx', CX).attr('cy', CY)
@@ -373,69 +374,69 @@
       });
     }
 
-    /* ===== Fonction de création d'un nœud (partagée enter/mettreAJourVisuels) ===== */
-    function creerNoeud(enter) {
-      const g = enter.append('g').attr('class', 'noeud');
+    /* ===== Node factory (shared by enter and updateVisuals) ===== */
+    function createNode(enter) {
+      const g = enter.append('g').attr('class', 'node');
 
-      // Halo pour les actifs (≤7j avec git)
+      // Halo for active projects (≤7d with git)
       g.append('circle')
         .attr('class', 'halo')
-        .attr('r', d => (d.has_git && d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7)
-          ? d.rayon + 10 : 0)
+        .attr('r', d => (d.has_git && d.days_since_commit !== null && d.days_since_commit <= 7)
+          ? d.radius + 10 : 0)
         .attr('fill', '#3fb95010')
         .attr('stroke', 'none');
 
-      // Cercle principal
+      // Main bubble
       g.append('circle')
-        .attr('class', 'bulle')
-        .attr('r', d => d.rayon)
-        .attr('fill', d => couleur(d) + '1a')
-        .attr('stroke', d => couleur(d))
+        .attr('class', 'bubble')
+        .attr('r', d => d.radius)
+        .attr('fill', d => nodeColor(d) + '1a')
+        .attr('stroke', d => nodeColor(d))
         .attr('stroke-width', d => {
           if (!d.has_git) return 1.5;
-          if (d.jours_depuis_commit !== null && d.jours_depuis_commit <= 7) return 2.5;
+          if (d.days_since_commit !== null && d.days_since_commit <= 7) return 2.5;
           return 2;
         })
         .attr('stroke-dasharray', d => d.has_git ? null : '5 4')
-        .attr('opacity', d => d.opacite !== undefined ? d.opacite : 1);
+        .attr('opacity', d => d.opacity !== undefined ? d.opacity : 1);
 
-      // Anneau GSD (VIS-05) — rendu après .bulle (z-order SVG)
+      // GSD ring (drawn after .bubble for correct z-order)
       g.append('circle')
-        .attr('class', 'anneau-gsd')
-        .attr('r', d => d.rayon + 3)
+        .attr('class', 'gsd-ring')
+        .attr('r', d => d.radius + 3)
         .attr('fill', 'none')
         .attr('stroke-width', 3)
-        .attr('stroke', d => couleurGSD(d))
+        .attr('stroke', d => gsdColor(d))
         .attr('stroke-dasharray', d => d.has_state ? null : '5 4');
 
-      // Emojis stack
+      // Stack emojis
       g.append('text')
-        .attr('class', 'emoji-stack')
+        .attr('class', 'stack-emoji')
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'middle')
-        .attr('y', d => labelStack(d) ? -6 : 0)
-        .attr('font-size', d => Math.max(11, d.rayon * 0.45) + 'px')
-        .text(d => labelStack(d));
+        .attr('y', d => stackLabel(d) ? -6 : 0)
+        .attr('font-size', d => Math.max(11, d.radius * 0.45) + 'px')
+        .text(d => stackLabel(d));
 
-      // Nom du projet
+      // Project name
       g.append('text')
-        .attr('class', 'nom-projet')
+        .attr('class', 'project-name')
         .attr('text-anchor', 'middle')
-        .attr('y', d => d.rayon + 13)
+        .attr('y', d => d.radius + 13)
         .attr('font-size', '10px')
         .attr('font-weight', '500')
-        .attr('fill', d => couleur(d))
-        .text(d => d.nom.length > 14 ? d.nom.slice(0, 13) + '…' : d.nom);
+        .attr('fill', d => nodeColor(d))
+        .text(d => d.name.length > 14 ? d.name.slice(0, 13) + '…' : d.name);
 
-      // Jours depuis commit
+      // Days label
       g.append('text')
-        .attr('class', 'label-jours')
+        .attr('class', 'days-label')
         .attr('text-anchor', 'middle')
-        .attr('y', d => d.rayon + 25)
+        .attr('y', d => d.radius + 25)
         .attr('font-size', '9px')
-        .attr('fill', d => couleur(d))
+        .attr('fill', d => nodeColor(d))
         .attr('opacity', 0.7)
-        .text(d => labelJours(d));
+        .text(d => daysLabel(d));
 
       return g;
     }
@@ -443,109 +444,102 @@
     /* ===== Simulation ===== */
     let simulation;
 
-    function lancerSimulation(nodes) {
-      dessinerAnneaux();
+    function startSimulation(nodes) {
+      drawRings();
 
       simulation = d3.forceSimulation(nodes)
-        .force('radial',    d3.forceRadial(d => rayonCible(d), CX, CY).strength(0.55))
-        .force('collision', d3.forceCollide(d => d.rayon + 6).strength(0.9))
+        .force('radial',    d3.forceRadial(d => targetZone(d), CX, CY).strength(0.55))
+        .force('collision', d3.forceCollide(d => d.radius + 6).strength(0.9))
         .force('center',    d3.forceCenter(CX, CY).strength(0.04))
         .alphaDecay(0.05)
-        .on('tick', mettreAJour)
+        .on('tick', tick)
         .on('end', () => {
           simulation.alphaTarget(0).stop();
-          sauvegarderPositions(nodes);
+          savePositions(nodes);
         });
 
-      /* Rendu avec key function (pitfall #5) */
-      const noeuds = viewport.selectAll('g.noeud')
+      const nodeEls = viewport.selectAll('g.node')
         .data(nodes, d => d.id)
         .join(
-          enter => creerNoeud(enter),
+          enter => createNode(enter),
           update => update,
           exit => exit.remove()
         );
 
-      /* Tooltip hover */
-      noeuds
-        .on('mouseenter', (event, d) => afficherTooltip(event, d))
-        .on('mousemove',  (event)    => deplacerTooltip(event))
-        .on('mouseleave', ()         => masquerTooltip());
+      nodeEls
+        .on('mouseenter', (event, d) => showTooltip(event, d))
+        .on('mousemove',  (event)    => moveTooltip(event))
+        .on('mouseleave', ()         => hideTooltip());
 
-      /* Drag (pitfall #2 : stopPropagation sur mousedown) */
-      noeuds.on('mousedown', e => { e.stopPropagation(); masquerTooltip(); })
+      nodeEls.on('mousedown', e => { e.stopPropagation(); hideTooltip(); })
         .call(d3.drag()
           .on('start', (event, d) => {
             if (!event.active) simulation.alphaTarget(0.3).restart();
             d.fx = d.x; d.fy = d.y;
-            const el = event.sourceEvent?.target?.closest?.('.noeud');
+            const el = event.sourceEvent?.target?.closest?.('.node');
             if (el) d3.select(el).classed('dragging', true);
           })
           .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
           .on('end', (event, d) => {
             if (!event.active) simulation.alphaTarget(0);
             d.fx = null; d.fy = null;
-            const el = event.sourceEvent?.target?.closest?.('.noeud');
+            const el = event.sourceEvent?.target?.closest?.('.node');
             if (el) d3.select(el).classed('dragging', false);
-            sauvegarderPositions(nodes);
+            savePositions(nodes);
           })
         );
 
-      noeuds.on('click', (event, d) => {
-        pulserBulle(event.currentTarget);
-        fetch('/open?path=' + encodeURIComponent(d.chemin)).catch(() => {});
+      nodeEls.on('click', (event, d) => {
+        pulseNode(event.currentTarget);
+        fetch('/open?path=' + encodeURIComponent(d.path)).catch(() => {});
       });
 
-      function mettreAJour() {
-        noeuds.attr('transform', d => `translate(${d.x},${d.y})`);
+      function tick() {
+        nodeEls.attr('transform', d => `translate(${d.x},${d.y})`);
       }
     }
 
-    /* ===== Mise à jour visuels sans relancer simulation (D-10, Pitfall 3 + 4) ===== */
-    function mettreAJourVisuels(nouvellesDonnees) {
-      // Fusion positions sauvegardées AVANT toute opération D3 (Pitfall 3)
-      const positionsSauvees = JSON.parse(localStorage.getItem(CLE_LS) || '{}');
-      nouvellesDonnees.forEach(p => {
-        const pos = positionsSauvees[p.id];
-        // Valider x/y : doivent être des nombres finis pour éviter translate(NaN,NaN)
+    /* ===== Live update — refresh visuals without restarting the simulation ===== */
+    function updateVisuals(newData) {
+      // Merge saved positions BEFORE any D3 operation to avoid overwriting them
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+      newData.forEach(p => {
+        const pos = saved[p.id];
         if (pos && typeof pos.x === 'number' && typeof pos.y === 'number'
             && isFinite(pos.x) && isFinite(pos.y)) {
-          // Mise à jour coordonnées uniquement — ne pas toucher fx/fy (drag en cours)
           p.x = pos.x;
           p.y = pos.y;
         }
       });
 
-      // Mise à jour D3 avec key function — join sans recréer la simulation (Pitfall 4)
-      const noeuds = viewport.selectAll('g.noeud')
-        .data(nouvellesDonnees, d => d.id)
+      const nodeEls = viewport.selectAll('g.node')
+        .data(newData, d => d.id)
         .join(
           enter => {
-            const g = creerNoeud(enter);
-            // Attacher événements aux nouveaux nœuds
-            g.on('mouseenter', (event, d) => afficherTooltip(event, d))
-              .on('mousemove',  (event)    => deplacerTooltip(event))
-              .on('mouseleave', ()         => masquerTooltip());
-            g.on('mousedown', e => { e.stopPropagation(); masquerTooltip(); })
+            const g = createNode(enter);
+            g.on('mouseenter', (event, d) => showTooltip(event, d))
+              .on('mousemove',  (event)    => moveTooltip(event))
+              .on('mouseleave', ()         => hideTooltip());
+            g.on('mousedown', e => { e.stopPropagation(); hideTooltip(); })
               .call(d3.drag()
                 .on('start', (event, d) => {
                   if (!event.active) simulation.alphaTarget(0.3).restart();
                   d.fx = d.x; d.fy = d.y;
-                  const el = event.sourceEvent?.target?.closest?.('.noeud');
+                  const el = event.sourceEvent?.target?.closest?.('.node');
                   if (el) d3.select(el).classed('dragging', true);
                 })
                 .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
                 .on('end', (event, d) => {
                   if (!event.active) simulation.alphaTarget(0);
                   d.fx = null; d.fy = null;
-                  const el = event.sourceEvent?.target?.closest?.('.noeud');
+                  const el = event.sourceEvent?.target?.closest?.('.node');
                   if (el) d3.select(el).classed('dragging', false);
-                  sauvegarderPositions(nouvellesDonnees);
+                  savePositions(newData);
                 })
               );
             g.on('click', (event, d) => {
-              pulserBulle(event.currentTarget);
-              fetch('/open?path=' + encodeURIComponent(d.chemin)).catch(() => {});
+              pulseNode(event.currentTarget);
+              fetch('/open?path=' + encodeURIComponent(d.path)).catch(() => {});
             });
             return g;
           },
@@ -553,45 +547,43 @@
           exit => exit.remove()
         );
 
-      // Transitions 400ms sur les attributs visuels (D-10)
-      noeuds.select('.bulle')
+      nodeEls.select('.bubble')
         .transition().duration(400)
-        .attr('r', d => d.rayon)
-        .attr('opacity', d => d.opacite !== undefined ? d.opacite : 1);
+        .attr('r', d => d.radius)
+        .attr('opacity', d => d.opacity !== undefined ? d.opacity : 1);
 
-      noeuds.select('.anneau-gsd')
+      nodeEls.select('.gsd-ring')
         .transition().duration(400)
-        .attr('r', d => d.rayon + 3)
-        .attr('stroke', d => couleurGSD(d))
+        .attr('r', d => d.radius + 3)
+        .attr('stroke', d => gsdColor(d))
         .attr('stroke-dasharray', d => d.has_state ? null : '5 4');
 
-      // Réajustement physique après changement de rayons (Pitfall 6)
+      // Nudge collision force after radius changes
       if (simulation) {
-        simulation.force('collision', d3.forceCollide(d => d.rayon + 6).strength(0.9))
+        simulation.force('collision', d3.forceCollide(d => d.radius + 6).strength(0.9))
           .alpha(0.1).restart();
       }
 
-      sauvegarderPositions(nouvellesDonnees);
+      savePositions(newData);
     }
 
-    /* ===== Chargement + fusion localStorage (pitfall #3 : AVANT D3) ===== */
+    /* ===== Initial load + localStorage merge ===== */
     fetch('/api/projects')
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then(projets => {
-        if (projets.length === 0) {
-          document.getElementById('etat-vide').style.display = 'block';
+      .then(projects => {
+        if (projects.length === 0) {
+          document.getElementById('empty-state').style.display = 'block';
           return;
         }
 
-        // Fusion positions sauvegardées — AVANT lancerSimulation() (pitfall #3)
-        const positionsSauvees = JSON.parse(localStorage.getItem(CLE_LS) || '{}');
-        const n = projets.length;
-        projets.forEach((p, i) => {
-          const pos = positionsSauvees[p.id];
-          // Valider x/y : doivent être des nombres finis pour éviter translate(NaN,NaN)
+        // Merge saved positions BEFORE startSimulation()
+        const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+        const n = projects.length;
+        projects.forEach((p, i) => {
+          const pos = saved[p.id];
           if (pos && typeof pos.x === 'number' && typeof pos.y === 'number'
               && isFinite(pos.x) && isFinite(pos.y)) {
             p.x = pos.x;
@@ -603,89 +595,85 @@
           }
         });
 
-        lancerSimulation(projets);
+        startSimulation(projects);
       })
       .catch(err => {
-        console.error('Impossible de charger les projets :', err.message);
-        document.getElementById('etat-vide').textContent = 'Erreur de chargement — serveur démarré ?';
-        document.getElementById('etat-vide').style.display = 'block';
+        console.error('Could not load projects:', err.message);
+        const el = document.getElementById('empty-state');
+        el.textContent = 'Load error — is the server running?';
+        el.style.display = 'block';
       });
 
-    /* ===== Client WebSocket (INT-04) ===== */
-    let delaiReconnect = 1000;
-    const DELAI_MAX_WS = 30000;
+    /* ===== WebSocket client ===== */
+    let reconnectDelay = 1000;
+    const MAX_RECONNECT = 30000;
     let wsInstance = null;
 
-    function connecterWS() {
-      // Éviter les doublons si reconnexion rapide
+    function connectWS() {
       if (wsInstance && wsInstance.readyState === WebSocket.CONNECTING) return;
 
       const ws = new WebSocket(`ws://localhost:${location.port || 3000}`);
       wsInstance = ws;
 
       ws.addEventListener('open', () => {
-        delaiReconnect = 1000;  // reset backoff
-        dotWS('vert');
+        reconnectDelay = 1000;
+        setWsDot('green');
       });
 
       ws.addEventListener('message', (evt) => {
         try {
           const msg = JSON.parse(evt.data);
-          if (msg.type === 'mise_a_jour' && Array.isArray(msg.projets)) {
-            mettreAJourVisuels(msg.projets);
+          if (msg.type === 'update' && Array.isArray(msg.projects)) {
+            updateVisuals(msg.projects);
           }
         } catch (e) {
-          console.error('[ws] Message invalide :', e.message);
+          console.error('[ws] Invalid message:', e.message);
         }
       });
 
       ws.addEventListener('close', () => {
-        // Ignorer les événements close d'instances orphelines (race condition)
         if (wsInstance !== ws) return;
         wsInstance = null;
-        if (delaiReconnect >= DELAI_MAX_WS) {
-          dotWS('rouge');
-          return;  // arrêt (D-11 : plafond 30s)
+        if (reconnectDelay >= MAX_RECONNECT) {
+          setWsDot('red');
+          return;
         }
-        dotWS('orange');
-        // Capturer le délai AVANT de le doubler pour attendre la bonne durée
-        const delai = delaiReconnect;
-        delaiReconnect = Math.min(delaiReconnect * 2, DELAI_MAX_WS);
-        setTimeout(connecterWS, delai);
+        setWsDot('orange');
+        const delay = reconnectDelay;
+        reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT);
+        setTimeout(connectWS, delay);
       });
 
       ws.addEventListener('error', () => ws.close());
     }
 
-    /* ===== Filtrage (INT-03) ===== */
+    /* ===== Filter (search bar) ===== */
     (function() {
-      const input = document.getElementById('recherche-input');
+      const input = document.getElementById('search-input');
       if (!input) return;
 
-      function normaliser(s) {
+      function normalize(s) {
         return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
       }
 
-      function appliquerFiltre() {
-        const terme = normaliser(input.value);
-        viewport.selectAll('g.noeud')
+      function applyFilter() {
+        const term = normalize(input.value);
+        viewport.selectAll('g.node')
           .transition().duration(200)
-          .attr('opacity', d => (!terme || normaliser(d.nom).includes(terme)) ? 1 : 0.15);
+          .attr('opacity', d => (!term || normalize(d.name).includes(term)) ? 1 : 0.15);
       }
 
-      input.addEventListener('input', appliquerFiltre);
-
+      input.addEventListener('input', applyFilter);
       input.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
           input.value = '';
-          appliquerFiltre();
+          applyFilter();
           input.blur();
         }
       });
     })();
 
-    // Démarrer la connexion WS après le chargement initial
-    connecterWS();
+    connectWS();
   </script>
 </body>
 </html>

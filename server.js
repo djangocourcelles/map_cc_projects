@@ -4,10 +4,10 @@ const http    = require('http');
 const fs      = require('fs');
 const path    = require('path');
 const { exec, execFile } = require('child_process');
-const { scannerWorkspace, WORKSPACE } = require('./scanner');
+const { scanWorkspace, WORKSPACE } = require('./scanner');
 
 const { WebSocketServer } = require('ws');
-const { demarrerWatcher } = require('./watcher');
+const { startWatcher } = require('./watcher');
 
 const PORT       = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -21,51 +21,49 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  // Route API — GET /api/projects
+  // GET /api/projects
   if (req.method === 'GET' && req.url === '/api/projects') {
-    let projets;
+    let projects;
     try {
-      projets = scannerWorkspace();
+      projects = scanWorkspace();
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ erreur: err.message }));
+      res.end(JSON.stringify({ error: err.message }));
       return;
     }
     res.writeHead(200, {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
     });
-    res.end(JSON.stringify(projets));
+    res.end(JSON.stringify(projects));
     return;
   }
 
-  // Route — GET /open (ouvre un projet dans VS Code — INT-02)
+  // GET /open — opens a project in VS Code
   if (req.url.startsWith('/open') && req.method === 'GET') {
-    const params = new URL(req.url, 'http://localhost').searchParams;
-    const chemin = params.get('path') || '';
-    const SAFE_WORKSPACE = WORKSPACE.endsWith('/') ? WORKSPACE : WORKSPACE + '/';
-    if (!chemin.startsWith(SAFE_WORKSPACE)) {
-      res.writeHead(400); res.end('Chemin invalide'); return;
+    const params      = new URL(req.url, 'http://localhost').searchParams;
+    const projectPath = params.get('path') || '';
+    const safeWorkspace = WORKSPACE.endsWith('/') ? WORKSPACE : WORKSPACE + '/';
+    if (!projectPath.startsWith(safeWorkspace)) {
+      res.writeHead(400); res.end('Invalid path'); return;
     }
-    execFile('code', [chemin], err => {
-      if (err) console.error('[open] Erreur VS Code :', err.message);
+    execFile('code', [projectPath], err => {
+      if (err) console.error('[open] VS Code error:', err.message);
     });
     res.writeHead(204); res.end();
     return;
   }
 
-  // Fichiers statiques
-  const urlNormalisee = req.url.split('?')[0]; // ignorer query strings
-  const fichierRelatif = urlNormalisee === '/' ? 'index.html' : urlNormalisee;
-  const filePath = path.join(PUBLIC_DIR, fichierRelatif);
+  // Static files
+  const normalizedUrl  = req.url.split('?')[0];
+  const relativeFile   = normalizedUrl === '/' ? 'index.html' : normalizedUrl;
+  const filePath       = path.join(PUBLIC_DIR, relativeFile);
 
-  // Sécurité : empêcher les traversées de répertoire hors de PUBLIC_DIR
-  // On compare avec le séparateur de chemin pour éviter qu'un préfixe de dossier
-  // (/foo/public) soit confondu avec un dossier voisin (/foo/public2).
-  const SAFE_PREFIX = PUBLIC_DIR.endsWith(path.sep) ? PUBLIC_DIR : PUBLIC_DIR + path.sep;
-  if (!filePath.startsWith(SAFE_PREFIX) && filePath !== PUBLIC_DIR) {
+  // Directory traversal guard — compare with trailing separator to avoid prefix collisions
+  const safePrefix = PUBLIC_DIR.endsWith(path.sep) ? PUBLIC_DIR : PUBLIC_DIR + path.sep;
+  if (!filePath.startsWith(safePrefix) && filePath !== PUBLIC_DIR) {
     res.writeHead(403);
-    res.end('Accès refusé');
+    res.end('Forbidden');
     return;
   }
 
@@ -73,7 +71,7 @@ const server = http.createServer((req, res) => {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404);
-      res.end('Fichier non trouvé');
+      res.end('Not found');
       return;
     }
     res.writeHead(200, {
@@ -83,30 +81,29 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// WebSocket attaché au même port HTTP (INT-04)
+// WebSocket server sharing the same HTTP port
 const wss = new WebSocketServer({ server });
 wss.on('connection', (ws) => {
-  ws.on('error', (err) => console.error('[ws] Erreur client :', err.message));
+  ws.on('error', (err) => console.error('[ws] Client error:', err.message));
 });
 
 server.listen(PORT, () => {
-  console.log(`Serveur démarré : http://localhost:${PORT}`);
-  console.log(`Workspace scanné : ${WORKSPACE}`);
-  // Ouverture browser macOS natif — zéro dépendance (INFRA-02)
+  console.log(`Server started: http://localhost:${PORT}`);
+  console.log(`Scanning workspace: ${WORKSPACE}`);
   exec(`open http://localhost:${PORT}`, (err) => {
-    if (err) console.error('Impossible d\'ouvrir le browser :', err.message);
+    if (err) console.error('Could not open browser:', err.message);
   });
-  demarrerWatcher(wss);
-  console.log('[watcher] Surveillance active — STATE.md + COMMIT_EDITMSG');
+  startWatcher(wss);
+  console.log('[watcher] Watching STATE.md + COMMIT_EDITMSG');
 });
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(
-      `Port ${PORT} déjà utilisé. Arrêter le processus existant ou utiliser PORT=3001 node server.js`
+      `Port ${PORT} already in use. Stop the existing process or use PORT=3001 node server.js`
     );
   } else {
-    console.error('Erreur serveur :', err.message);
+    console.error('Server error:', err.message);
   }
   process.exit(1);
 });

@@ -2,12 +2,12 @@
 
 const chokidar  = require('chokidar');
 const WebSocket = require('ws');
-const { scannerWorkspace, invaliderCache, WORKSPACE } = require('./scanner');
+const { scanWorkspace, invalidateCache, WORKSPACE } = require('./scanner');
 
-const PATTERNS  = [
+const PATTERNS = [
   `${WORKSPACE}/**/.planning/STATE.md`,
   `${WORKSPACE}/**/.git/COMMIT_EDITMSG`,
-  // WR-06 : détecter l'apparition/suppression de projets (nouveaux dossiers)
+  // Detect project creation/deletion
   `${WORKSPACE}/*/CLAUDE.md`,
   `${WORKSPACE}/*/package.json`,
   `${WORKSPACE}/*/requirements.txt`,
@@ -15,53 +15,53 @@ const PATTERNS  = [
 ];
 
 /**
- * Démarre la surveillance chokidar et branche le broadcast WebSocket.
- * @param {WebSocketServer} wss - Instance WebSocketServer à utiliser pour le broadcast
- * @returns {FSWatcher} L'instance chokidar (pour fermeture propre si besoin)
+ * Starts the chokidar watcher and wires up WebSocket broadcasts.
+ * @param {WebSocketServer} wss - WebSocketServer instance to broadcast on
+ * @returns {FSWatcher} The chokidar instance (for clean shutdown if needed)
  */
-function demarrerWatcher(wss) {
+function startWatcher(wss) {
   let timer = null;
 
   const watcher = chokidar.watch(PATTERNS, {
     ignoreInitial: true,
     persistent: true,
-    // D-07 : lookahead négatif pour garder COMMIT_EDITMSG (Pitfall 2)
+    // Negative lookahead keeps COMMIT_EDITMSG while ignoring the rest of .git
     ignored: /node_modules|\.git[/\\](?!COMMIT_EDITMSG)|venv|dist|__pycache__/,
     awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
   });
 
-  function rescanEtBroadcast() {
-    invaliderCache(); // Forcer un rescan complet à chaque changement détecté
-    let projets;
+  function rescanAndBroadcast() {
+    invalidateCache();
+    let projects;
     try {
-      projets = scannerWorkspace();  // D-08 : rescan total
+      projects = scanWorkspace();
     } catch (err) {
-      console.error('[watcher] Erreur rescan :', err.message);
+      console.error('[watcher] Rescan error:', err.message);
       return;
     }
-    const payload = JSON.stringify({ type: 'mise_a_jour', projets });
+    const payload = JSON.stringify({ type: 'update', projects });
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(payload, (err) => {
-          if (err) console.error('[watcher] Erreur envoi WS :', err.message);
+          if (err) console.error('[watcher] Send error:', err.message);
         });
       }
     });
   }
 
-  // D-09 : debounce 500ms
-  function declencherDebounce() {
+  // Debounce 500ms to avoid bursts on rapid file changes
+  function triggerDebounce() {
     clearTimeout(timer);
-    timer = setTimeout(rescanEtBroadcast, 500);
+    timer = setTimeout(rescanAndBroadcast, 500);
   }
 
   watcher
-    .on('add',    declencherDebounce)
-    .on('change', declencherDebounce)
-    .on('unlink', declencherDebounce)
-    .on('error',  (err) => console.error('[watcher] Erreur :', err.message));
+    .on('add',    triggerDebounce)
+    .on('change', triggerDebounce)
+    .on('unlink', triggerDebounce)
+    .on('error',  (err) => console.error('[watcher] Error:', err.message));
 
   return watcher;
 }
 
-module.exports = { demarrerWatcher };
+module.exports = { startWatcher };
