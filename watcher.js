@@ -43,7 +43,9 @@ function demarrerWatcher(wss) {
     const payload = JSON.stringify({ type: 'mise_a_jour', projets });
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(payload);
+        client.send(payload, (err) => {
+          if (err) console.error('[watcher] Erreur envoi WS :', err.message);
+        });
       }
     });
   }

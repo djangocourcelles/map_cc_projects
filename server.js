@@ -3,7 +3,7 @@
 const http    = require('http');
 const fs      = require('fs');
 const path    = require('path');
-const { exec } = require('child_process');
+const { exec, execFile } = require('child_process');
 const { scannerWorkspace } = require('./scanner');
 
 const { WebSocketServer } = require('ws');
@@ -46,7 +46,7 @@ const server = http.createServer((req, res) => {
     if (!chemin.startsWith('/Users/laurent/Documents/CLAUDE_PROJETS/')) {
       res.writeHead(400); res.end('Chemin invalide'); return;
     }
-    require('child_process').exec(`code "${chemin}"`, err => {
+    execFile('code', [chemin], err => {
       if (err) console.error('[open] Erreur VS Code :', err.message);
     });
     res.writeHead(204); res.end();
