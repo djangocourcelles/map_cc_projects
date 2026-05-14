@@ -5,10 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Map CC Projects</title>
   <style>
+    :root {
+      --bg:           #0d1117;
+      --surface:      #161b22;
+      --border:       #30363d;
+      --text-primary: #e6edf3;
+      --text-muted:   #8b949e;
+      --text-code:    #a5d6ff;
+      --accent-gsd:   #3fb950;
+      --shadow:       rgba(0, 0, 0, 0.55);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:           #f6f8fa;
+        --surface:      #ffffff;
+        --border:       #d0d7de;
+        --text-primary: #1f2328;
+        --text-muted:   #656d76;
+        --text-code:    #0969da;
+        --accent-gsd:   #1a7f37;
+        --shadow:       rgba(0, 0, 0, 0.12);
+      }
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
-      background: #0d1117;
+      background: var(--bg);
       font-family: system-ui, -apple-system, sans-serif;
     }
     #carte { width: 100vw; height: 100vh; display: block; }
@@ -25,44 +48,82 @@
       transform-box: fill-box;
     }
 
+    .bulle {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
     #etat-vide {
       display: none;
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      color: #8b949e;
+      color: var(--text-muted);
       font-size: 14px;
       text-align: center;
     }
 
     /* Tooltip */
     #tooltip {
-      display: none;
       position: fixed;
       z-index: 100;
-      background: #161b22;
-      border: 1px solid #30363d;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 13px;
-      font-size: 12px;
-      color: #e6edf3;
+      padding: 10px 12px;
+      max-width: 240px;
       pointer-events: none;
-      max-width: 220px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 20px var(--shadow);
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 160ms ease, transform 160ms ease;
     }
-    #tooltip.visible { display: block; }
-    .tt-nom   { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-    .tt-row   { display: flex; align-items: center; gap: 6px; color: #8b949e; margin-top: 3px; }
-    .tt-dot   { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .tt-gsd   { margin-top: 6px; padding-top: 6px; border-top: 1px solid #30363d;
-                font-size: 10px; color: #3fb950; }
+    #tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .tt-nom    { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; line-height: 1.2; }
+    .tt-stack  { font-size: 14px; margin-bottom: 4px; }
+    .tt-row    { display: flex; align-items: center; gap: 6px; color: var(--text-muted); margin-top: 3px; font-size: 12px; line-height: 1.4; }
+    .tt-dot    { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .tt-sep    { color: var(--text-muted); }
+    .tt-branche { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace; font-size: 11px; color: var(--text-code); }
+    .tt-commit { color: var(--text-muted); font-size: 12px; }
+    .tt-gsd    { display: flex; align-items: center; gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); font-size: 11px; font-weight: 500; }
+    .tt-gsd-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .tt-gsd-label { color: var(--text-primary); }
+
+    /* Overlay recherche */
+    #recherche-overlay {
+      position: fixed; top: 16px; left: 16px; z-index: 200;
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: border-color 200ms ease, box-shadow 200ms ease;
+    }
+    #recherche-overlay:focus-within {
+      border-color: #58a6ff;
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15), 0 2px 8px var(--shadow);
+    }
+    .loupe {
+      font-size: 15px; color: var(--text-muted); line-height: 1; user-select: none;
+    }
+    #recherche-input {
+      background: transparent; border: none; outline: none;
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px; width: 160px; caret-color: #58a6ff;
+    }
+    #recherche-input::placeholder { color: var(--text-muted); }
+    #recherche-input::-webkit-search-cancel-button { display: none; }
 
     /* Légende */
     #legende {
       position: fixed; bottom: 16px; left: 16px;
-      background: #161b22; border: 1px solid #30363d;
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 8px; padding: 10px 14px;
-      font-size: 11px; color: #8b949e;
+      font-size: 11px; color: var(--text-muted);
       display: flex; flex-direction: column; gap: 5px;
       pointer-events: none;
     }
@@ -71,7 +132,7 @@
     .leg-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
     .leg-dash  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
                  border: 1.5px dashed #6e7681; background: transparent; }
-    .leg-sep   { border-top: 1px solid #30363d; margin: 3px 0; }
+    .leg-sep   { border-top: 1px solid var(--border); margin: 3px 0; }
     .leg-cercle { border-radius: 50%; background: #3fb950; display: inline-block; flex-shrink: 0; }
     .leg-anneau {
       width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
@@ -101,6 +162,11 @@
   <div id="carte"></div>
   <div id="etat-vide">Aucun projet trouvé dans le workspace.</div>
   <div id="tooltip"></div>
+  <div id="recherche-overlay">
+    <span class="loupe" aria-hidden="true">⌕</span>
+    <input id="recherche-input" type="search" placeholder="Filtrer les projets…"
+           autocomplete="off" spellcheck="false" />
+  </div>
 
   <div id="legende">
     <div class="leg-titre">Taille &mdash; activité</div>
@@ -223,39 +289,52 @@
         .replace(/"/g, '&quot;');
     }
 
+    const LABELS_GSD = {
+      'in-progress': 'En cours', 'complete': 'Terminé',
+      'not-started': 'Non démarré', 'paused': 'En pause',
+      'blocked': 'Bloqué', 'unknown': 'GSD actif'
+    };
+
     function afficherTooltip(event, d) {
       const c = couleur(d);
       const stacks = labelStack(d);
-      const jours  = labelJours(d);
       const branche = d.has_git && d.branche ? d.branche : null;
-
-      tooltip.innerHTML = `
-        <div class="tt-nom">${esc(d.nom)}</div>
-        ${stacks ? `<div class="tt-row"><span style="font-size:14px">${stacks}</span></div>` : ''}
-        <div class="tt-row">
-          <div class="tt-dot" style="background:${c}"></div>
-          <span>${jours}</span>
-          ${branche ? `<span style="color:#6e7681">·</span><span style="font-family:monospace;font-size:11px">${esc(branche)}</span>` : ''}
-        </div>
-        ${d.date_relative && d.has_git ? `<div class="tt-row" style="margin-left:13px">${esc(d.date_relative)}</div>` : ''}
-        ${d.has_gsd ? '<div class="tt-gsd">✦ GSD actif</div>' : ''}
-      `;
+      const gsdCouleur = couleurGSD(d);
+      const gsdLabel = d.has_state ? (LABELS_GSD[d.phase_gsd] || 'GSD actif') : null;
+      tooltip.innerHTML = [
+        `<div class="tt-nom">${esc(d.nom)}</div>`,
+        stacks ? `<div class="tt-stack">${stacks}</div>` : '',
+        `<div class="tt-row">`,
+          `<div class="tt-dot" style="background:${c}"></div>`,
+          `<span class="tt-date">${esc(d.date_relative)}</span>`,
+          branche ? `<span class="tt-sep">·</span><code class="tt-branche">${esc(branche)}</code>` : '',
+        `</div>`,
+        d.last_commit ? `<div class="tt-row tt-commit">${esc(d.last_commit)}</div>` : '',
+        gsdLabel ? `<div class="tt-gsd"><span class="tt-gsd-dot" style="background:${gsdCouleur}"></span><span class="tt-gsd-label">${esc(gsdLabel)}</span></div>` : '',
+      ].join('');
       tooltip.classList.add('visible');
       deplacerTooltip(event);
     }
 
+    const OFFSET_X = 12;
+    const OFFSET_Y = 20;
     function deplacerTooltip(event) {
-      const marge = 14;
       const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
-      let x = event.clientX + marge;
-      let y = event.clientY + marge;
-      if (x + tw > LARGEUR - 8) x = event.clientX - tw - marge;
-      if (y + th > HAUTEUR - 8) y = event.clientY - th - marge;
+      let x = event.clientX + OFFSET_X;
+      let y = event.clientY - OFFSET_Y - th;
+      if (x + tw > window.innerWidth  - 8) x = event.clientX - tw - OFFSET_X;
+      if (y < 8)                           y = event.clientY + 8;
       tooltip.style.left = x + 'px';
       tooltip.style.top  = y + 'px';
     }
 
     function masquerTooltip() { tooltip.classList.remove('visible'); }
+
+    function pulserBulle(noeudG) {
+      d3.select(noeudG).select('.bulle')
+        .transition().duration(120).attr('transform', 'scale(1.15)')
+        .transition().duration(180).attr('transform', 'scale(1)');
+    }
 
     function sauvegarderPositions(nodes) {
       const pos = {};
@@ -412,6 +491,11 @@
           })
         );
 
+      noeuds.on('click', (event, d) => {
+        pulserBulle(event.currentTarget);
+        fetch('/open?path=' + encodeURIComponent(d.chemin)).catch(() => {});
+      });
+
       function mettreAJour() {
         noeuds.attr('transform', d => `translate(${d.x},${d.y})`);
       }
@@ -459,6 +543,10 @@
                   sauvegarderPositions(nouvellesDonnees);
                 })
               );
+            g.on('click', (event, d) => {
+              pulserBulle(event.currentTarget);
+              fetch('/open?path=' + encodeURIComponent(d.chemin)).catch(() => {});
+            });
             return g;
           },
           update => update,
@@ -568,6 +656,33 @@
 
       ws.addEventListener('error', () => ws.close());
     }
+
+    /* ===== Filtrage (INT-03) ===== */
+    (function() {
+      const input = document.getElementById('recherche-input');
+      if (!input) return;
+
+      function normaliser(s) {
+        return String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+      }
+
+      function appliquerFiltre() {
+        const terme = normaliser(input.value);
+        viewport.selectAll('g.noeud')
+          .transition().duration(200)
+          .attr('opacity', d => (!terme || normaliser(d.nom).includes(terme)) ? 1 : 0.15);
+      }
+
+      input.addEventListener('input', appliquerFiltre);
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          input.value = '';
+          appliquerFiltre();
+          input.blur();
+        }
+      });
+    })();
 
     // Démarrer la connexion WS après le chargement initial
     connecterWS();
