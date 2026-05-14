@@ -43,7 +43,8 @@ const server = http.createServer((req, res) => {
   if (req.url.startsWith('/open') && req.method === 'GET') {
     const params = new URL(req.url, 'http://localhost').searchParams;
     const chemin = params.get('path') || '';
-    if (!chemin.startsWith('/Users/laurent/Documents/CLAUDE_PROJETS/')) {
+    const SAFE_WORKSPACE = WORKSPACE.endsWith('/') ? WORKSPACE : WORKSPACE + '/';
+    if (!chemin.startsWith(SAFE_WORKSPACE)) {
       res.writeHead(400); res.end('Chemin invalide'); return;
     }
     execFile('code', [chemin], err => {

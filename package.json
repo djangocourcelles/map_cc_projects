@@ -1,14 +1,36 @@
 {
   "name": "map-cc-projects",
   "version": "1.0.0",
-  "description": "Carte interactive des projets Claude Code",
+  "description": "Interactive force-graph that maps all your Claude Code projects — activity, tech stack, GSD workflow status, live via WebSocket.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "keywords": [
+    "claude-code",
+    "developer-tools",
+    "d3js",
+    "visualization",
+    "nodejs",
+    "force-graph",
+    "workspace",
+    "project-management"
+  ],
+  "homepage": "https://github.com/djangocourcelles/map_cc_projects#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/djangocourcelles/map_cc_projects.git"
+  },
+  "bugs": {
+    "url": "https://github.com/djangocourcelles/map_cc_projects/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
+    "chokidar": "5.0.0",
     "d3": "7.9.0",
-    "ws": "8.20.0",
-    "chokidar": "5.0.0"
+    "ws": "8.20.0"
   }
 }
