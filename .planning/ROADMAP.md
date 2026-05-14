@@ -60,7 +60,7 @@ Plans:
 **Plans:** 2 plans
 Plans:
 - [x] 03-01-PLAN.md — Backend : scanner.js (last_commit), server.js (route GET /open)
-- [ ] 03-02-PLAN.md — Frontend : index.html (tooltip redesign, clic VS Code + pulse, filtrage, thème dark/light)
+- [x] 03-02-PLAN.md — Frontend : index.html (tooltip redesign, clic VS Code + pulse, filtrage, thème dark/light)
 **UI hint:** yes
 
 ---
@@ -71,7 +71,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Core Graph | 2/2 | Complete | 2026-05-11 |
 | 2. Live Data | 0/2 | Ready to execute | - |
-| 3. Interactions | 1/2 | In progress | - |
+| 3. Interactions | 2/2 | Complete | 2026-05-14 |
 
 ---
 
@@ -100,4 +100,4 @@ Plans:
 
 ---
 *Roadmap créée : 2026-05-10*
-*Mise à jour : 2026-05-14 — Phase 03 planifiée (03-01 backend + 03-02 frontend)*
+*Mise à jour : 2026-05-14 — Phase 03 complète (03-01 backend + 03-02 frontend)*
