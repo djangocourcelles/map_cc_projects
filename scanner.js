@@ -126,6 +126,12 @@ function construireRecord(chemin, id, nom) {
   const jours = calculerJours(timestampRaw);
   const branche = brancheRaw || (hasGit ? 'branche inconnue' : null);
 
+  // Dernier message de commit (Phase 3 — tooltip INT-01)
+  const commitMsgRaw = hasGit ? gitExec('git log -1 --format=%s', chemin) : null;
+  const last_commit = commitMsgRaw
+    ? commitMsgRaw.slice(0, 60) + (commitMsgRaw.length > 60 ? '…' : '')
+    : null;
+
   // Statut GSD (Phase 2)
   const statutGSD = lireStatutGSD(chemin);
 
@@ -143,6 +149,7 @@ function construireRecord(chemin, id, nom) {
     has_gsd:             fs.existsSync(path.join(chemin, '.planning')),
     has_state:           statutGSD !== null,
     phase_gsd:           statutGSD,
+    last_commit,
   };
 }
 
